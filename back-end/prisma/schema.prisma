@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Aluno {
+  id_aluno        Int      @id @default(autoincrement())
+  nome            String   @db.VarChar(30)
+  data_nascimento Int      @db.SmallInt
+  email           String   @db.VarChar(40)
+  telefone        Int
+  data_cadastro   String?
+  foto            String
+  id_plano        Int
+  status          DateTime @default(now())
+  @@map("alunos")
+}
+
+model Treino {
+  id_treino    Int      @id @default(autoincrement())
+  id_aluno     Int
+  id_instrutor Int
+  objetivo     String   @db.VarChar(100)
+  observacoes  String   @db.VarChar(200)
+  data_entrada DateTime @default(now())
+  data_saida   DateTime @updatedAt
+  @@map("treinos")
+}
+
+model Cliente {
+  id_instrutor  Int     @id @default(autoincrement())
+  nome          String  @db.VarChar(30)
+  email         String  @db.VarChar(40)
+  telefone      Int
+  especialidade String  @db.VarChar(50)
+  ativo         Boolean @default(true)
+  foto          String
+  @@map("clientes")
+}
+
+model Plano {
+  id_plano      Int     @id @default(autoincrement())
+  nome_plano    String  @db.VarChar(30)
+  descricao     String  @db.VarChar(100)
+  duracao_meses Int     @db.SmallInt
+  valor_plano   Float
+  ativo         Boolean @default(true)
+  @@map("planos")
+}
+
+model Pagamento {
+  id_pagamento     Int              @id @default(autoincrement())
+  id_aluno         Int
+  id_plano         Int
+  data_pagamento   DateTime         @default(now())
+  data_vencimento  DateTime
+  valor            Float
+  metodo           MetodoPagamento
+  status_pagamento StatusPagamento
+  @@map("pagamentos")
+}
+
+enum MetodoPagamento {
+  Dinheiro
+  Cartao
+  PIX
+}
+
+enum StatusPagamento {
+  Pendente
+  Pago
+  Atrasado
+}
