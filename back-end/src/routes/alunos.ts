@@ -1,166 +1,126 @@
 import { prisma } from "../../lib/prisma"
-import { Combustiveis } from "../../generated/prisma/enums"
-
-import { Router } from 'express'
-import { z } from 'zod'
+import { Router } from "express"
+import { z } from "zod"
 
 const router = Router()
 
-const carroSchema = z.object({
-  modelo: z.string().min(2,
-    { message: "Modelo deve possuir, no mínimo, 2 caracteres" }),
-  ano: z.number(),
-  preco: z.number(),
-  km: z.number(),
+const alunoSchema = z.object({
+  nome: z.string().min(1).max(30),
+  data_nascimento: z.number().int(),
+  email: z.string().email().max(40),
+  telefone: z.number().int(),
+  data_cadastro: z.string().optional(),
   foto: z.string(),
-  acessorios: z.string().nullable().optional(),
-  combustivel: z.enum(Combustiveis).optional(),
-  destaque: z.boolean().optional(),
-  marcaId: z.number(),
+  id_plano: z.number().int(),
 })
 
 router.get("/", async (req, res) => {
   try {
-    const carros = await prisma.carro.findMany({
-      include: {
-        marca: true,
-      }
-    })
-    res.status(200).json(carros)
+    const alunos = await prisma.aluno.findMany()
+    res.status(200).json(alunos)
+  } catch (error) {
+    res.status(500).json({ erro: error })
+  }
+})
+
+router.get("/pesquisa/:termo", async (req, res) => {
+  const { termo } = req.params
+  const id = Number(termo)
+
+  try {
+    const alunos = Number.isInteger(id) && id > 0
+      ? await prisma.aluno.findMany({ where: { id_aluno: id } })
+      : await prisma.aluno.findMany({
+          where: {
+            OR: [
+              { nome: { contains: termo, mode: "insensitive" } },
+              { email: { contains: termo, mode: "insensitive" } },
+            ]
+          }
+        })
+
+    res.status(200).json(alunos)
   } catch (error) {
     res.status(500).json({ erro: error })
   }
 })
 
 router.get("/:id", async (req, res) => {
-  const { id } = req.params
+  const id = Number(req.params.id)
+
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ erro: "ID do aluno inválido" })
+    return
+  }
 
   try {
-    const carro = await prisma.carro.findFirst({
-      where: { id: Number(id)},
-      include: {
-        marca: true,
-      }
-    })
-    res.status(200).json(carro)
+    const aluno = await prisma.aluno.findUnique({ where: { id_aluno: id } })
+
+    if (!aluno) {
+      res.status(404).json({ erro: "Aluno não encontrado" })
+      return
+    }
+
+    res.status(200).json(aluno)
   } catch (error) {
     res.status(500).json({ erro: error })
   }
 })
 
 router.post("/", async (req, res) => {
+  const valida = alunoSchema.safeParse(req.body)
 
-  const valida = carroSchema.safeParse(req.body)
   if (!valida.success) {
-    res.status(400).json({ erro: valida.error })
+    res.status(400).json({ erro: valida.error.flatten() })
     return
   }
 
-  const { modelo, ano, preco, km, foto, acessorios = null,
-    destaque = true, combustivel = 'FLEX', marcaId } = valida.data
-
   try {
-    const carro = await prisma.carro.create({
-      data: {
-        modelo, ano, preco, km, foto, acessorios, destaque,
-        combustivel, marcaId
-      }
-    })
-    res.status(201).json(carro)
-  } catch (error) {
-    res.status(400).json({ error })
-  }
-})
-
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params
-
-  try {
-    const carro = await prisma.carro.delete({
-      where: { id: Number(id) }
-    })
-    res.status(200).json(carro)
+    const aluno = await prisma.aluno.create({ data: valida.data })
+    res.status(201).json(aluno)
   } catch (error) {
     res.status(400).json({ erro: error })
   }
 })
 
 router.put("/:id", async (req, res) => {
-  const { id } = req.params
+  const id = Number(req.params.id)
+  const valida = alunoSchema.safeParse(req.body)
 
-  const valida = carroSchema.safeParse(req.body)
-  if (!valida.success) {
-    res.status(400).json({ erro: valida.error })
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ erro: "ID do aluno inválido" })
     return
   }
 
-  const { modelo, ano, preco, km, foto, acessorios,
-    destaque, combustivel, marcaId } = valida.data
+  if (!valida.success) {
+    res.status(400).json({ erro: valida.error.flatten() })
+    return
+  }
 
   try {
-    const carro = await prisma.carro.update({
-      where: { id: Number(id) },
-      data: {
-        modelo, ano, preco, km, foto, acessorios,
-        destaque, combustivel, marcaId
-      }
+    const aluno = await prisma.aluno.update({
+      where: { id_aluno: id },
+      data: valida.data
     })
-    res.status(200).json(carro)
+    res.status(200).json(aluno)
   } catch (error) {
-    res.status(400).json({ error })
+    res.status(400).json({ erro: error })
   }
 })
 
-router.get("/pesquisa/:termo", async (req, res) => {
-  const { termo } = req.params
+router.delete("/:id", async (req, res) => {
+  const id = Number(req.params.id)
 
-  // tenta converter para número
-  const termoNumero = Number(termo)
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ erro: "ID do aluno inválido" })
+    return
+  }
 
-  // is Not a Number, ou seja, se não é um número: filtra por texto
-  if (isNaN(termoNumero)) {
-    try {
-      const carros = await prisma.carro.findMany({
-        include: {
-          marca: true,
-        },
-        where: {
-          OR: [
-            { modelo: { contains: termo, mode: "insensitive" } },
-            { marca: { nome: { equals: termo, mode: "insensitive" } } }
-          ]
-        }
-      })
-      res.status(200).json(carros)
-    } catch (error) {
-      res.status(500).json({ erro: error })
-    }
-  } else {
-    if (termoNumero <= 3000) {
-      try {
-        const carros = await prisma.carro.findMany({
-          include: {
-            marca: true,
-          },
-          where: { ano: termoNumero }
-        })
-        res.status(200).json(carros)
-      } catch (error) {
-        res.status(500).json({ erro: error })
-      }  
-    } else {
-      try {
-        const carros = await prisma.carro.findMany({
-          include: {
-            marca: true,
-          },
-          where: { preco: { lte: termoNumero } }
-        })
-        res.status(200).json(carros)
-      } catch (error) {
-        res.status(500).json({ erro: error })
-      }
-    }
+  try {
+    const aluno = await prisma.aluno.delete({ where: { id_aluno: id } })
+    res.status(200).json(aluno)
+  } catch (error) {
+    res.status(400).json({ erro: error })
   }
 })
 
