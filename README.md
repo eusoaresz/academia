@@ -1,67 +1,239 @@
-/# Backend de Gestão (full_262_back)
+# Academia
 
-Descrição curta
--
-Projeto backend em Node/TypeScript que usa Prisma como ORM e PostgreSQL como banco de dados. O schema Prisma define entidades para gerenciar alunos, treinos, instrutores (clientes), planos e pagamentos.
+API e interface web para gerenciamento de uma academia. O projeto está organizado como um monorepo simples, com um backend em Node.js/TypeScript e um frontend em React/Vite.
 
-Modelos principais (baseado em `prisma/schema.prisma`)
-- **Aluno**: representa alunos com campos como `id_aluno`, `nome`, `data_nascimento`, `email`, `telefone`, `id_plano` e `status`.
-- **Treino**: registros de treino vinculados a `id_aluno` e `id_instrutor`, com `objetivo`, `observacoes`, `data_entrada` e `data_saida`.
-- **Cliente**: usado aqui como instrutor (`id_instrutor`, `nome`, `email`, `especialidade`, `ativo`, `foto`).
-- **Plano**: planos disponíveis (`id_plano`, `nome_plano`, `descricao`, `duracao_meses`, `valor_plano`, `ativo`).
-- **Pagamento**: pagamentos de planos (`id_pagamento`, `id_aluno`, `id_plano`, `data_pagamento`, `data_vencimento`, `valor`, `metodo`, `status_pagamento`).
+## Estado atual
 
-Enums úteis
-- `MetodoPagamento` — `Dinheiro`, `Cartao`, `PIX`.
-- `StatusPagamento` — `Pendente`, `Pago`, `Atrasado`.
+O banco foi modelado para os seguintes recursos:
 
-Arquivos importantes
-- `prisma/schema.prisma` — modelo de dados Prisma.
-- `prisma.config.ts` — configuração do Prisma (a conexão `DATABASE_URL` é gerenciada aqui para Prisma v7).
-- `src/` — código fonte do servidor (ex.: `src/server.ts`).
+- alunos;
+- instrutores, representados atualmente pelo modelo `Cliente`;
+- planos;
+- treinos;
+- pagamentos.
 
-Pré-requisitos
-- Node.js (versão compatível com seu `package.json`)
-- PostgreSQL (ou um serviço compatível)
-- Variável de ambiente `DATABASE_URL` configurada (ex.: em `.env`).
+A rota de alunos já foi adaptada ao schema Prisma e oferece operações de consulta, pesquisa, criação, edição e exclusão. As rotas de planos, instrutores e login ainda possuem partes herdadas da aplicação anterior de veículos e precisam ser alinhadas antes de serem consideradas estáveis.
 
-Instruções rápidas (PowerShell)
-1. Instale dependências:
-```powershell
-npm install
-```
-2. Defina a variável `DATABASE_URL` (no `.env` ou no ambiente). Exemplo de `.env`:
+## Estrutura do projeto
+
 ```text
-DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+academia/
+├── back-end/
+│   ├── lib/prisma.ts             # Instância do Prisma Client
+│   ├── prisma/schema.prisma      # Modelos e enums do banco
+│   ├── prisma/migrations/        # Histórico de migrações
+│   ├── src/routes/
+│   │   ├── alunos.ts
+│   │   ├── instrutores.ts
+│   │   ├── login.ts
+│   │   └── planos.ts
+│   ├── src/server.ts             # Servidor Express
+│   ├── package.json
+│   └── .env                      # Não versionar
+└── front-end/
+		├── src/                      # Aplicação React
+		├── public/                   # Arquivos públicos
+		├── index.html
+		└── package.json
 ```
-3. Validar schema Prisma:
+
+## Tecnologias
+
+### Backend
+
+- Node.js e TypeScript;
+- Express 5;
+- CORS;
+- Zod para validação dos corpos das requisições;
+- Prisma Client;
+- PostgreSQL;
+- `bcrypt` e `jsonwebtoken` preparados para autenticação.
+
+### Frontend
+
+- React 19;
+- Vite;
+- TypeScript;
+- `lucide-react` para ícones.
+
+## Modelos do banco
+
+O schema está em [`back-end/prisma/schema.prisma`](back-end/prisma/schema.prisma).
+
+### Aluno
+
+Campos: `id_aluno`, `nome`, `data_nascimento`, `email`, `telefone`, `data_cadastro`, `foto`, `id_plano` e `status`.
+
+`id_aluno` é gerado automaticamente. `status` é preenchido pelo banco com a data atual, pois está definido como `DateTime @default(now())`.
+
+### Treino
+
+Campos: `id_treino`, `id_aluno`, `id_instrutor`, `objetivo`, `observacoes`, `data_entrada` e `data_saida`.
+
+### Cliente / Instrutor
+
+O modelo se chama `Cliente`, mas seus campos representam um instrutor: `id_instrutor`, `nome`, `email`, `telefone`, `especialidade`, `ativo` e `foto`.
+
+### Plano
+
+Campos: `id_plano`, `nome_plano`, `descricao`, `duracao_meses`, `valor_plano` e `ativo`.
+
+### Pagamento
+
+Campos: `id_pagamento`, `id_aluno`, `id_plano`, `data_pagamento`, `data_vencimento`, `valor`, `metodo` e `status_pagamento`.
+
+Os valores permitidos são:
+
+- `metodo`: `Dinheiro`, `Cartao` ou `PIX`;
+- `status_pagamento`: `Pendente`, `Pago` ou `Atrasado`.
+
+## Rotas do backend
+
+O servidor escuta na porta `3000` por padrão.
+
+### Alunos
+
+Base: `http://localhost:3000/alunos`
+
+| Método | Endpoint | Descrição |
+| --- | --- | --- |
+| `GET` | `/alunos` | Lista todos os alunos |
+| `GET` | `/alunos/:id` | Busca um aluno por `id_aluno` |
+| `GET` | `/alunos/pesquisa/:termo` | Pesquisa por ID, nome ou e-mail |
+| `POST` | `/alunos` | Cadastra um aluno |
+| `PUT` | `/alunos/:id` | Atualiza um aluno |
+| `DELETE` | `/alunos/:id` | Exclui um aluno |
+
+Exemplo de corpo para `POST /alunos` ou `PUT /alunos/:id`:
+
+```json
+{
+	"nome": "Joao da Silva",
+	"data_nascimento": 1995,
+	"email": "joao@example.com",
+	"telefone": 11999999999,
+	"data_cadastro": "2026-09-09",
+	"foto": "joao.jpg",
+	"id_plano": 1
+}
+```
+
+As respostas de validação usam status `400`. Um aluno inexistente retorna `404` na consulta por ID. Erros inesperados do banco retornam `500` nas consultas e `400` nas operações de escrita atuais.
+
+### Outras rotas
+
+O servidor registra atualmente:
+
+```text
+/planos
+/instrutores
+/instrutores/login
+```
+
+Essas rotas ainda precisam ser revisadas para usar exclusivamente os modelos e campos definidos no schema atual. Ainda não existem arquivos de rota para `/treinos` e `/pagamentos`.
+
+## Configuração local
+
+### Pré-requisitos
+
+- Node.js instalado;
+- PostgreSQL disponível;
+- banco de dados criado;
+- variável `DATABASE_URL` configurada.
+
+Crie `back-end/.env` com uma URL válida:
+
+```env
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/academia"
+JWT_KEY="uma-chave-local-desenvolvimento"
+```
+
+Não versione arquivos `.env`. O `.gitignore` da raiz já ignora variáveis de ambiente, dependências, builds e arquivos gerados.
+
+## Instalação e execução
+
+### Backend
+
 ```powershell
+cd back-end
+npm install
 npx prisma validate
-```
-4. Gerar o client Prisma:
-```powershell
 npx prisma generate
 ```
-5. Aplicar esquema ao banco (escolha o fluxo que prefere):
-```powershell
-# Usando migrações (recomendado para dev com histórico):
-npx prisma migrate dev --name ajuste-schema
 
-# Ou sincronizar sem criar migração:
+Para criar/aplicar uma migração em desenvolvimento:
+
+```powershell
+npx prisma migrate dev --name inicial
+```
+
+Ou, quando não for necessário criar histórico de migração:
+
+```powershell
 npx prisma db push
 ```
-6. Iniciar servidor (substitua pelo script real do `package.json`):
+
+O backend ainda não possui um script `dev` configurado no `package.json`. Até que ele seja adicionado, o servidor deve ser executado com um executor TypeScript, por exemplo:
+
 ```powershell
+npx tsx src/server.ts
+```
+
+### Frontend
+
+```powershell
+cd front-end
+npm install
 npm run dev
 ```
 
-Sobre a imagem/diagrama
-Se você tem um diagrama ER ou imagem ilustrativa, coloque-a em `docs/diagram.png` (ou atualize o caminho abaixo) e adicione referência aqui. Exemplo de markdown para inserir a imagem:
-```markdown
-![Diagrama ER](docs/diagram.png)
+O Vite exibirá no terminal a URL local da aplicação, normalmente `http://localhost:5173`.
+
+## Comandos úteis
+
+Executados dentro de `back-end`:
+
+```powershell
+npx prisma validate       # Valida o schema
+npx prisma generate       # Gera o Prisma Client
+npx prisma migrate status # Mostra o estado das migrações
+npx prisma studio         # Abre o Prisma Studio
 ```
 
-Notas finais
-- O `schema.prisma` foi adaptado para Prisma v7: a conexão de banco é configurada em `prisma.config.ts` em vez de `url` no `schema.prisma`.
-- Posso ajudar a adicionar relações (`@relation`) explícitas entre modelos, ajustar tipos (`telefone` como `String`, `data_nascimento` como `DateTime`) ou gerar um diagrama ER a partir do schema — quer que eu faça isso agora?
-# acaemia
+Executados dentro de `front-end`:
+
+```powershell
+npm run dev               # Servidor de desenvolvimento
+npm run build             # Typecheck e build de produção
+npm run lint              # Verificação com Oxlint
+npm run preview           # Pré-visualização do build
+```
+
+## Pendências conhecidas
+
+1. Adaptar `planos.ts` para usar `prisma.plano` e os campos de `Plano`.
+2. Adaptar `instrutores.ts` para usar os campos reais de `Cliente`.
+3. Decidir onde armazenar a senha do instrutor antes de finalizar o login. O schema atual não possui um campo `senha`.
+4. Corrigir o uso de `id_instrutor` no login e remover respostas que dependam de campos inexistentes.
+5. Criar rotas para `Treino` e `Pagamento`.
+6. Adicionar relações `@relation` entre alunos, planos, treinos, instrutores e pagamentos.
+7. Considerar trocar `telefone` para `String`, `data_nascimento` para `DateTime` e `data_cadastro` para `DateTime` no schema.
+8. Adicionar scripts de desenvolvimento e produção ao `back-end/package.json`.
+9. Adicionar testes para validação das rotas e integração com o banco.
+
+## Contribuição
+
+Antes de criar um commit:
+
+```powershell
+git status
+git diff
+```
+
+Não inclua `node_modules`, `.env`, builds ou o Prisma Client gerado. Use commits pequenos e descritivos, por exemplo:
+
+```text
+✨ feat: adaptar rota de alunos ao schema Prisma
+♻️ refactor: reorganizar rotas da academia
+📝 docs: atualizar documentação do projeto
+```
