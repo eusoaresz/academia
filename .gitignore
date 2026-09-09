@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Build output and caches
+dist/
+build/
+out/
+.cache/
+.vite/
+coverage/
+
+# Generated Prisma client
+back-end/generated/
+back-end/prisma/generated/
+
+# Logs and local databases
+*.log
+*.sqlite
+*.sqlite3
+*.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE and operating system files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
