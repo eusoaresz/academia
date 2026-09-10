@@ -1,53 +1,47 @@
-import jwt from "jsonwebtoken"
 import { prisma } from "../../lib/prisma"
 import { Router } from "express"
-import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 
 const router = Router()
 
 router.post("/", async (req, res) => {
-  const { email, senha } = req.body
+  const { email } = req.body
 
-  // em termos de segurança, o recomendado é exibir uma mensagem padrão
-  // a fim de evitar de dar "dicas" sobre o processo de login para hackers
-  const mensaPadrao = "Login ou senha incorretos"
+  const mensaPadrao = "Email não encontrado"
 
-  if (!email || !senha) {
-    // res.status(400).json({ erro: "Informe e-mail e senha do usuário" })
+  if (!email) {
     res.status(400).json({ erro: mensaPadrao })
     return
   }
 
   try {
-    const cliente = await prisma.cliente.findFirst({
+    const instrutor = await prisma.cliente.findFirst({
       where: { email }
     })
 
-    if (cliente == null) {
-      // res.status(400).json({ erro: "E-mail inválido" })
+    if (instrutor == null) {
       res.status(400).json({ erro: mensaPadrao })
       return
     }
 
-    // se o e-mail existe, faz-se a comparação dos hashs
-    if (bcrypt.compareSync(senha, cliente.senha)) {
-      // se confere, gera e retorna o token
+    if (instrutor.ativo) {
       const token = jwt.sign({
-        clienteLogadoId: cliente.id,
-        clienteLogadoNome: cliente.nome
+        instrutorLogadoId: instrutor.id_instrutor,
+        instrutorLogadoNome: instrutor.nome
       },
         process.env.JWT_KEY as string,
         { expiresIn: "1h" }
       )
 
       res.status(200).json({
-        id: cliente.id,
-        nome: cliente.nome,
-        email: cliente.email,
+        id_instrutor: instrutor.id_instrutor,
+        nome: instrutor.nome,
+        email: instrutor.email,
+        especialidade: instrutor.especialidade,
         token
       })
     } else {
-      res.status(400).json({ erro: mensaPadrao })
+      res.status(400).json({ erro: "Instrutor inativo" })
     }
   } catch (error) {
     res.status(400).json(error)
