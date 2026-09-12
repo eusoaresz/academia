@@ -7,7 +7,7 @@ const router = Router()
 const instrutorSchema = z.object({
   nome: z.string().min(1).max(30),
   email: z.string().email().max(40),
-  telefone: z.number().int(),
+  telefone: z.string().min(8).max(20),
   especialidade: z.string().min(1).max(50),
   foto: z.string(),
 })
@@ -50,6 +50,24 @@ router.get("/:id", async (req, res) => {
     res.status(200).json(instrutor)
   } catch (error) {
     res.status(400).json(error)
+  }
+})
+
+router.delete("/:id", async (req, res) => {
+  const id = Number(req.params.id)
+
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ erro: "ID do instrutor inválido" })
+    return
+  }
+
+  try {
+    const instrutor = await prisma.cliente.delete({
+      where: { id_instrutor: id }
+    })
+    res.status(200).json(instrutor)
+  } catch (error) {
+    res.status(400).json({ erro: error })
   }
 })
 
