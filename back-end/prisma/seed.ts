@@ -1,166 +1,114 @@
 import { prisma } from "../lib/prisma";
-import { type Prisma } from "../generated/prisma/client"
+const planos = [
+    {
+        nome_plano: "Performance",
+        descricao: "Acompanhamento completo",
+        duracao_meses: 3,
+        valor_plano: 289.9,
+        ativo: true,
+    },
+    {
+        nome_plano: "Essencial",
+        descricao: "Treinos personalizados",
+        duracao_meses: 1,
+        valor_plano: 149.9,
+        ativo: true,
+    },
+];
 
-const notebooks: Prisma.NotebookCreateInput[] = [
+const instrutores = [
     {
-        modelo: "Aspire Go 15",
-        marca: "Acer",
-        processador: "Intel",
-        preco: 2800,
-        quant: 3
+        nome: "Rafael Costa",
+        email: "rafael@movimente.com",
+        telefone: "11999999999",
+        especialidade: "Musculação",
+        ativo: true,
+        foto: "https://i.pravatar.cc/100?img=13",
     },
-    {
-        modelo: "Nitro 5 AN515",
-        marca: "Acer",
-        processador: "Intel",
-        preco: 5200,
-        quant: 8
-    },
-    {
-        modelo: "Inspiron 15 3000",
-        marca: "Dell",
-        processador: "Intel",
-        preco: 3200,
-        quant: 5
-    },
-    {
-        modelo: "XPS 13",
-        marca: "Dell",
-        processador: "Intel",
-        preco: 7800,
-        quant: 2
-    },
-    {
-        modelo: "Pavilion 15",
-        marca: "HP",
-        processador: "AMD",
-        preco: 2900,
-        quant: 7
-    },
-    {
-        modelo: "Envy x360",
-        marca: "HP",
-        processador: "AMD",
-        preco: 4500,
-        quant: 4
-    },
-    {
-        modelo: "ThinkPad E14",
-        marca: "Lenovo",
-        processador: "Intel",
-        preco: 3800,
-        quant: 6
-    },
-    {
-        modelo: "Yoga 7i",
-        marca: "Lenovo",
-        processador: "Intel",
-        preco: 6200,
-        quant: 3
-    },
-    {
-        modelo: "VivoBook 14",
-        marca: "Asus",
-        processador: "AMD",
-        preco: 3100,
-        quant: 9
-    },
-    {
-        modelo: "ZenBook 14",
-        marca: "Asus",
-        processador: "Intel",
-        preco: 6900,
-        quant: 1
-    },
-    {
-        modelo: "Ideapad 3",
-        marca: "Lenovo",
-        processador: "AMD",
-        preco: 2700,
-        quant: 12
-    },
-    {
-        modelo: "Latitude 3420",
-        marca: "Dell",
-        processador: "Intel",
-        preco: 4100,
-        quant: 4
-    },
-    {
-        modelo: "Spectre x360",
-        marca: "HP",
-        processador: "Intel",
-        preco: 8500,
-        quant: 2
-    },
-    {
-        modelo: "ROG Strix G15",
-        marca: "Asus",
-        processador: "AMD",
-        preco: 5800,
-        quant: 5
-    },
-    {
-        modelo: "Swift 3",
-        marca: "Acer",
-        processador: "AMD",
-        preco: 3400,
-        quant: 6
-    },
-    {
-        modelo: "Legion 5",
-        marca: "Lenovo",
-        processador: "AMD",
-        preco: 6100,
-        quant: 3
-    },
-    {
-        modelo: "ProBook 450",
-        marca: "HP",
-        processador: "Intel",
-        preco: 3700,
-        quant: 7
-    },
-    {
-        modelo: "TUF Gaming A15",
-        marca: "Asus",
-        processador: "AMD",
-        preco: 4900,
-        quant: 4
-    },
-    {
-        modelo: "Vostro 15",
-        marca: "Dell",
-        processador: "Intel",
-        preco: 3000,
-        quant: 10
-    },
-    {
-        modelo: "Chromebook 314",
-        marca: "Acer",
-        processador: "Intel",
-        preco: 2200,
-        quant: 15
-    },
-    {
-        modelo: "Surface Laptop 4",
-        marca: "Microsoft",
-        processador: "AMD",
-        preco: 7200,
-        quant: 2
-    }
-]
+];
 
 async function main() {
     try {
-        await prisma.notebook.createMany({ data: notebooks })
-        console.log(`${notebooks.length} Notebooks Cadastrados...`)
+        await prisma.pagamento.deleteMany();
+        await prisma.treino.deleteMany();
+        await prisma.aluno.deleteMany();
+        await prisma.cliente.deleteMany();
+        await prisma.plano.deleteMany();
+
+        const planosCriados = await Promise.all(
+            planos.map((plano) => prisma.plano.create({ data: plano })),
+        );
+        const instrutoresCriados = await Promise.all(
+            instrutores.map((instrutor) => prisma.cliente.create({ data: instrutor })),
+        );
+
+        const alunos = await Promise.all([
+            prisma.aluno.create({
+                data: {
+                    nome: "Marina Oliveira",
+                    data_nascimento: 1995,
+                    email: "marina.oliveira@email.com",
+                    telefone: "11987654321",
+                    data_cadastro: "2026-09-01",
+                    foto: "https://i.pravatar.cc/100?img=47",
+                    id_plano: planosCriados[0].id_plano,
+                },
+            }),
+            prisma.aluno.create({
+                data: {
+                    nome: "Lucas Mendes",
+                    data_nascimento: 1998,
+                    email: "lucas@email.com",
+                    telefone: "11976543210",
+                    data_cadastro: "2026-09-03",
+                    foto: "https://i.pravatar.cc/100?img=12",
+                    id_plano: planosCriados[1].id_plano,
+                },
+            }),
+        ]);
+
+        const agora = new Date();
+        const vencimento = new Date("2026-09-12T00:00:00.000Z");
+
+        await prisma.treino.create({
+            data: {
+                id_aluno: alunos[0].id_aluno,
+                id_instrutor: instrutoresCriados[0].id_instrutor,
+                objetivo: "Hipertrofia",
+                observacoes: "Treino A/B, 4x por semana.",
+                data_entrada: agora,
+                data_saida: agora,
+            },
+        });
+
+        await prisma.pagamento.createMany({
+            data: [
+                {
+                    id_aluno: alunos[0].id_aluno,
+                    id_plano: planosCriados[0].id_plano,
+                    data_vencimento: vencimento,
+                    valor: planosCriados[0].valor_plano,
+                    metodo: "PIX",
+                    status_pagamento: "Pago",
+                },
+                {
+                    id_aluno: alunos[1].id_aluno,
+                    id_plano: planosCriados[1].id_plano,
+                    data_vencimento: new Date("2026-09-14T00:00:00.000Z"),
+                    valor: planosCriados[1].valor_plano,
+                    metodo: "Cartao",
+                    status_pagamento: "Pendente",
+                },
+            ],
+        });
+
+        console.log("Seed da academia concluído: 2 planos, 1 instrutor, 2 alunos, 1 treino e 2 pagamentos.");
     } catch (error) {
-        console.error("Erro nas Inclusões (Seeds):", error);
+        console.error("Erro no seed da academia:", error);
         throw error;
     } finally {
         await prisma.$disconnect();
     }
 }
 
-await main()
+await main();
