@@ -1,24 +1,26 @@
 import express from 'express'
 import cors from 'cors'
-
-import routePlanos from './routes/planos'
-import routeAlunos from './routes/alunos'
-import routesInstrutores from './routes/instrutores'
-import routesLogin from './routes/login'
+import alunosRouter from './routes/alunos'
+import instrutoresRouter from './routes/instrutores'
+import loginRouter from './routes/login'
+import planosRouter from './routes/planos'
+import treinosRouter from './routes/treinos'
+import pagamentosRouter from './routes/pagamentos'
 
 const app = express()
 const port = 3000
 
 app.use(express.json())
 app.use(cors())
-
-app.use("/planos", routePlanos)
-app.use("/alunos", routeAlunos)
-app.use("/instrutores", routesInstrutores)
-app.use("/instrutores/login", routesLogin)
+app.use('/alunos', alunosRouter)
+app.use('/clientes', instrutoresRouter)
+app.use('/login', loginRouter)
+app.use('/planos', planosRouter)
+app.use('/treinos', treinosRouter)
+app.use('/pagamentos', pagamentosRouter)
 
 app.get('/', (req, res) => {
-  res.send('API: Revenda de Veículos')
+  res.send('API: Academia - Servidor rodando!')
 })
 
 app.listen(port, () => {

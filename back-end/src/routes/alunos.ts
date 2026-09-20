@@ -8,7 +8,7 @@ const alunoSchema = z.object({
   nome: z.string().min(1).max(30),
   data_nascimento: z.number().int(),
   email: z.string().email().max(40),
-  telefone: z.number().int(),
+  telefone: z.string().min(8).max(20),
   data_cadastro: z.string().optional(),
   foto: z.string(),
   id_plano: z.number().int(),

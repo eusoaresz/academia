@@ -5,15 +5,18 @@ import { z } from 'zod'
 
 const router = Router()
 
-const marcaSchema = z.object({
-  nome: z.string().min(3,
-    { message: "Modelo deve possuir, no mínimo, 3 caracteres" })
+const planoSchema = z.object({
+  nome_plano: z.string().min(1).max(30),
+  descricao: z.string().max(100),
+  duracao_meses: z.number().int().positive(),
+  valor_plano: z.number().nonnegative(),
+  ativo: z.boolean().default(true)
 })
 
 router.get("/", async (req, res) => {
   try {
-    const marcas = await prisma.marca.findMany()
-    res.status(200).json(marcas)
+    const planos = await prisma.plano.findMany()
+    res.status(200).json(planos)
   } catch (error) {
     res.status(500).json({ erro: error })
   }
@@ -21,19 +24,17 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
 
-  const valida = marcaSchema.safeParse(req.body)
+  const valida = planoSchema.safeParse(req.body)
   if (!valida.success) {
     res.status(400).json({ erro: valida.error })
     return
   }
 
-  const { nome } = valida.data
-
   try {
-    const marca = await prisma.marca.create({
-      data: { nome }
+    const plano = await prisma.plano.create({
+      data: valida.data
     })
-    res.status(201).json(marca)
+    res.status(201).json(plano)
   } catch (error) {
     res.status(400).json({ error })
   }
@@ -43,10 +44,10 @@ router.delete("/:id", async (req, res) => {
   const { id } = req.params
 
   try {
-    const marca = await prisma.marca.delete({
-      where: { id: Number(id) }
+    const plano = await prisma.plano.delete({
+      where: { id_plano: Number(id) }
     })
-    res.status(200).json(marca)
+    res.status(200).json(plano)
   } catch (error) {
     res.status(400).json({ erro: error })
   }
@@ -55,20 +56,18 @@ router.delete("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { id } = req.params
 
-  const valida = marcaSchema.safeParse(req.body)
+  const valida = planoSchema.safeParse(req.body)
   if (!valida.success) {
     res.status(400).json({ erro: valida.error })
     return
   }
 
-  const { nome } = valida.data
-
   try {
-    const marca = await prisma.marca.update({
-      where: { id: Number(id) },
-      data: { nome }
+    const plano = await prisma.plano.update({
+      where: { id_plano: Number(id) },
+      data: valida.data
     })
-    res.status(200).json(marca)
+    res.status(200).json(plano)
   } catch (error) {
     res.status(400).json({ error })
   }
