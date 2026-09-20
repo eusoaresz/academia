@@ -1,0 +1,1 @@
+ALTER TABLE "clientes" ADD COLUMN "senha" VARCHAR(255) NOT NULL DEFAULT 'senha-nao-configurada';

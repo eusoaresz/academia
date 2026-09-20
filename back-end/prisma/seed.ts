@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { hashPassword } from "../lib/password";
 const planos = [
     {
         nome_plano: "Performance",
@@ -20,6 +21,7 @@ const instrutores = [
     {
         nome: "Rafael Costa",
         email: "rafael@movimente.com",
+        senha: hashPassword("123456"),
         telefone: "11999999999",
         especialidade: "Musculação",
         ativo: true,

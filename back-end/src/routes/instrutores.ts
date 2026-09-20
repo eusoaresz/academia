@@ -1,12 +1,14 @@
 import { prisma } from "../../lib/prisma"
 import { Router } from "express"
 import { z } from 'zod'
+import { hashPassword } from "../../lib/password"
 
 const router = Router()
 
 const instrutorSchema = z.object({
   nome: z.string().min(1).max(30),
   email: z.string().email().max(40),
+  senha: z.string().min(6).max(100),
   telefone: z.string().min(8).max(20),
   especialidade: z.string().min(1).max(50),
   foto: z.string(),
@@ -14,7 +16,17 @@ const instrutorSchema = z.object({
 
 router.get("/", async (req, res) => {
   try {
-    const instrutores = await prisma.cliente.findMany()
+    const instrutores = await prisma.cliente.findMany({
+      select: {
+        id_instrutor: true,
+        nome: true,
+        email: true,
+        telefone: true,
+        especialidade: true,
+        ativo: true,
+        foto: true,
+      },
+    })
     res.status(200).json(instrutores)
   } catch (error) {
     res.status(400).json(error)
@@ -29,13 +41,14 @@ router.post("/", async (req, res) => {
     return
   }
 
-  const { nome, email, telefone, especialidade, foto } = valida.data
+  const { nome, email, senha, telefone, especialidade, foto } = valida.data
 
   try {
     const instrutor = await prisma.cliente.create({
-      data: { nome, email, telefone, especialidade, foto }
+      data: { nome, email, senha: hashPassword(senha), telefone, especialidade, foto }
     })
-    res.status(201).json(instrutor)
+    const { senha: _, ...instrutorSemSenha } = instrutor
+    res.status(201).json(instrutorSemSenha)
   } catch (error) {
     res.status(400).json(error)
   }
@@ -45,7 +58,16 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params
   try {
     const instrutor = await prisma.cliente.findUnique({
-      where: { id_instrutor: parseInt(id) }
+      where: { id_instrutor: parseInt(id) },
+      select: {
+        id_instrutor: true,
+        nome: true,
+        email: true,
+        telefone: true,
+        especialidade: true,
+        ativo: true,
+        foto: true,
+      },
     })
     res.status(200).json(instrutor)
   } catch (error) {
