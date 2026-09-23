@@ -35,6 +35,7 @@ model Cliente {
   id_instrutor  Int     @id @default(autoincrement())
   nome          String  @db.VarChar(30)
   email         String  @db.VarChar(40)
+  senha         String  @db.VarChar(255)
   telefone      String   @db.VarChar(20)
   especialidade String  @db.VarChar(50)
   ativo         Boolean @default(true)

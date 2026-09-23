@@ -1,25 +1,32 @@
 import { prisma } from "../../lib/prisma"
 import { Router } from "express"
 import jwt from 'jsonwebtoken'
+import { z } from "zod"
+import { verifyPassword } from "../../lib/password"
 
 const router = Router()
 
 router.post("/", async (req, res) => {
-  const { email } = req.body
+  const valida = z.object({
+    email: z.string().email(),
+    senha: z.string().min(1),
+  }).safeParse(req.body)
 
-  const mensaPadrao = "Email não encontrado"
+  const mensaPadrao = "E-mail ou senha inválidos"
 
-  if (!email) {
+  if (!valida.success) {
     res.status(400).json({ erro: mensaPadrao })
     return
   }
+
+  const { email, senha } = valida.data
 
   try {
     const instrutor = await prisma.cliente.findFirst({
       where: { email }
     })
 
-    if (instrutor == null) {
+    if (instrutor == null || !verifyPassword(senha, instrutor.senha)) {
       res.status(400).json({ erro: mensaPadrao })
       return
     }
