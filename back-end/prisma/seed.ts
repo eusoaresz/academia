@@ -34,14 +34,14 @@ async function main() {
         await prisma.pagamento.deleteMany();
         await prisma.treino.deleteMany();
         await prisma.aluno.deleteMany();
-        await prisma.cliente.deleteMany();
+        await prisma.instrutor.deleteMany();
         await prisma.plano.deleteMany();
 
         const planosCriados = await Promise.all(
             planos.map((plano) => prisma.plano.create({ data: plano })),
         );
         const instrutoresCriados = await Promise.all(
-            instrutores.map((instrutor) => prisma.cliente.create({ data: instrutor })),
+            instrutores.map((instrutor) => prisma.instrutor.create({ data: instrutor })),
         );
 
         const alunos = await Promise.all([

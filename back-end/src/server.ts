@@ -13,7 +13,7 @@ const port = 3000
 app.use(express.json())
 app.use(cors())
 app.use('/alunos', alunosRouter)
-app.use('/clientes', instrutoresRouter)
+app.use('/instrutores', instrutoresRouter)
 app.use('/login', loginRouter)
 app.use('/planos', planosRouter)
 app.use('/treinos', treinosRouter)

@@ -22,7 +22,7 @@ router.post("/", async (req, res) => {
   const { email, senha } = valida.data
 
   try {
-    const instrutor = await prisma.cliente.findFirst({
+    const instrutor = await prisma.instrutor.findFirst({
       where: { email }
     })
 

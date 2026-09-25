@@ -7,12 +7,12 @@ API e interface web para gerenciamento de uma academia. O projeto está organiza
 O banco foi modelado para os seguintes recursos:
 
 - alunos;
-- instrutores, representados atualmente pelo modelo `Cliente`;
+- instrutores, representados pelo modelo `Instrutor`;
 - planos;
 - treinos;
 - pagamentos.
 
-A rota de alunos já foi adaptada ao schema Prisma e oferece operações de consulta, pesquisa, criação, edição e exclusão. As rotas de planos, instrutores e login ainda possuem partes herdadas da aplicação anterior de veículos e precisam ser alinhadas antes de serem consideradas estáveis.
+A rota de alunos e a rota de instrutores oferecem operações de consulta, criação, edição e exclusão alinhadas ao schema Prisma.
 
 ## Estrutura do projeto
 
@@ -70,9 +70,9 @@ Campos: `id_aluno`, `nome`, `data_nascimento`, `email`, `telefone`, `data_cadast
 
 Campos: `id_treino`, `id_aluno`, `id_instrutor`, `objetivo`, `observacoes`, `data_entrada` e `data_saida`.
 
-### Cliente / Instrutor
+### Instrutor
 
-O modelo se chama `Cliente`, mas seus campos representam um instrutor: `id_instrutor`, `nome`, `email`, `telefone`, `especialidade`, `ativo` e `foto`.
+O modelo se chama `Instrutor` e é persistido na tabela `instrutores`. Campos: `id_instrutor`, `nome`, `email`, `senha`, `telefone`, `especialidade`, `ativo` e `foto`.
 
 ### Plano
 
@@ -120,7 +120,7 @@ Exemplo de corpo para `POST /alunos` ou `PUT /alunos/:id`:
 
 As respostas de validação usam status `400`. Um aluno inexistente retorna `404` na consulta por ID. Erros inesperados do banco retornam `500` nas consultas e `400` nas operações de escrita atuais.
 
-### Outras rotas
+### Instrutores e outras rotas
 
 O servidor registra atualmente:
 
@@ -130,7 +130,7 @@ O servidor registra atualmente:
 /instrutores/login
 ```
 
-Essas rotas ainda precisam ser revisadas para usar exclusivamente os modelos e campos definidos no schema atual. Ainda não existem arquivos de rota para `/treinos` e `/pagamentos`.
+As rotas de instrutores usam exclusivamente o modelo `Instrutor` definido no schema atual. Também estão disponíveis `/treinos` e `/pagamentos`.
 
 ## Configuração local
 
@@ -211,15 +211,9 @@ npm run preview           # Pré-visualização do build
 
 ## Pendências conhecidas
 
-1. Adaptar `planos.ts` para usar `prisma.plano` e os campos de `Plano`.
-2. Adaptar `instrutores.ts` para usar os campos reais de `Cliente`.
-3. Decidir onde armazenar a senha do instrutor antes de finalizar o login. O schema atual não possui um campo `senha`.
-4. Corrigir o uso de `id_instrutor` no login e remover respostas que dependam de campos inexistentes.
-5. Criar rotas para `Treino` e `Pagamento`.
-6. Adicionar relações `@relation` entre alunos, planos, treinos, instrutores e pagamentos.
-7. Considerar trocar `telefone` para `String`, `data_nascimento` para `DateTime` e `data_cadastro` para `DateTime` no schema.
-8. Adicionar scripts de desenvolvimento e produção ao `back-end/package.json`.
-9. Adicionar testes para validação das rotas e integração com o banco.
+1. Adicionar relações `@relation` entre alunos, planos, treinos, instrutores e pagamentos.
+2. Adicionar testes para validação das rotas e integração com o banco.
+3. Adicionar scripts de desenvolvimento e produção adicionais ao `back-end/package.json`.
 
 ## Contribuição
 
