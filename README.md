@@ -39,7 +39,8 @@ o Vite normalmente usa 5173. Se usar outra porta, adicione sua origem em
   por até 7 dias. Sem a opção, usa SessionStorage, com validade de uma hora.
 - A restauração consulta `/clientes/me`; o UUID local sozinho não autentica.
 - Sair limpa os dados locais. O token emitido expira no servidor conforme sua validade.
-- `/#gestao`: login de administrador. Tokens de cliente/instrutor não autorizam gestão.
+- `/#gestao/login`: login de administrador. Após autenticar, o painel fica em `/#gestao/inicial`.
+- `/#gestao/inicial`: gestão da academia, protegida por sessão de administrador.
 - Planos: cadastro, alteração e campo Destaque. Inativos não aparecem no catálogo.
 - Horários: o administrador publica uma vaga por data/hora e plano, em Brasília.
 - Agendamentos: confirmar, recusar ou cancelar com resposta registrada no histórico.
@@ -91,11 +92,27 @@ Os testes unitários não usam o banco. Os testes de integração usam o banco
 configurado, criam dados exclusivos e removem somente esses dados ao terminar.
 O seed antigo é destrutivo e não deve ser executado para preparar produção.
 
-O guia [Publicação](docs/publicacao.md) contém a configuração de Vercel, Render,
-Neon e IA. `render.yaml` e `front-end/vercel.json` estão prontos para configuração.
-Não há publicação confirmada nem chave de IA configurada nesta entrega. O recurso
-de IA fica disponível após definir `OPENAI_API_KEY` e `OPENAI_MODEL` no servidor;
-nenhum texto fictício é apresentado como consulta real.
+O guia [Publicação](docs/publicacao.md) contém a configuração detalhada de Vercel,
+Render, Neon e IA. `render.yaml` e `front-end/vercel.json` estão prontos para
+configuração.
+
+### Hospedagem e variáveis de ambiente
+
+- **Render** hospeda a API Node/Express em `back-end`, executa o build e aplica as migrations.
+- **Neon** hospeda o banco PostgreSQL usado pelo Prisma e é configurado em `DATABASE_URL`.
+- **Vercel** hospeda o frontend React compilado pelo Vite na pasta `front-end/dist`.
+- **Vite** executa o frontend localmente e gera o build; não é um serviço de hospedagem.
+
+No Render, configure `DATABASE_URL`, `JWT_KEY`, `FRONTEND_URL` e `TRUST_PROXY=1`.
+No Vercel, configure `VITE_API_URL` com a URL HTTPS pública da API no Render, sem
+barra final. Depois de alterar `VITE_API_URL`, faça um novo deploy do frontend.
+
+Ordem recomendada: publicar a API no Render, copiar sua URL, configurar
+`VITE_API_URL` no Vercel, fazer redeploy do frontend e testar `/#cliente`,
+`/#gestao/login` e `/#gestao/inicial`.
+
+O recurso de IA fica disponível após definir `OPENAI_API_KEY` e `OPENAI_MODEL` no
+servidor; nenhum texto fictício é apresentado como consulta real.
 
 ## Situação dos requisitos do trabalho
 
@@ -110,4 +127,5 @@ nenhum texto fictício é apresentado como consulta real.
 9. Dashboard com gráficos: implementado.
 10. Listagem e cadastro de planos: implementados.
 11. Gestão e respostas das interações: implementadas.
-12. Deploy completo: preparado, ainda depende das contas e serviços de hospedagem.
+12. Deploy completo: configurações de Render e Vercel preparadas; depende das contas,
+    variáveis de ambiente e publicação dos serviços.
