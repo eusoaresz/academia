@@ -3,29 +3,25 @@ import type { FormEvent } from 'react'
 import { Dumbbell } from 'lucide-react'
 import './InstrutorLogin.css'
 
-export type InstrutorSession = {
-  id_instrutor: number
+export type AdminSession = {
+  id_admin: string
   nome: string
   email: string
-  telefone: string
-  especialidade: string
-  ativo: boolean
-  foto: string
   token: string
   expiresAt: number
 }
 
-type LoginResponse = InstrutorSession & { token: string; expiresIn: number }
+type LoginResponse = AdminSession & { token: string; expiresIn: number }
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API}/instrutores${path}`, { ...options, signal: AbortSignal.timeout(15000) })
+  const response = await fetch(`${API}/admin${path}`, { ...options, signal: AbortSignal.timeout(15000) })
   const result = await response.json().catch(() => null)
   if (!response.ok || !result) throw new Error(result?.erro ?? 'Não foi possível acessar o servidor.')
   return result as T
 }
 
-export default function InstrutorLogin({ onLogin }: { onLogin: (instrutor: InstrutorSession) => void }) {
+export default function AdminLogin({ onLogin }: { onLogin: (instrutor: AdminSession) => void }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [error, setError] = useState('')
@@ -41,10 +37,10 @@ export default function InstrutorLogin({ onLogin }: { onLogin: (instrutor: Instr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
       })
-      const profile = await request<InstrutorSession>('/me', {
+      const profile = await request<AdminSession>('/me', {
         headers: { Authorization: `Bearer ${result.token}` },
       })
-      sessionStorage.setItem('instrutorNome', profile.nome)
+      sessionStorage.setItem('adminNome', profile.nome)
       onLogin({ ...profile, token: result.token, expiresAt: Date.now() + result.expiresIn * 1000 })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível entrar.')
@@ -60,7 +56,7 @@ export default function InstrutorLogin({ onLogin }: { onLogin: (instrutor: Instr
     </header>
     <section className="instructor-login-card" aria-labelledby="instructor-login-title">
       <p className="eyebrow">GESTÃO DA ACADEMIA</p>
-      <h1 id="instructor-login-title">Acesso do instrutor</h1>
+      <h1 id="instructor-login-title">Acesso do administrador</h1>
       <p>Entre com suas credenciais para acessar o painel de gestão.</p>
       {error && <p className="instructor-login-error" role="alert">{error}</p>}
       <form onSubmit={submit} aria-busy={busy}>

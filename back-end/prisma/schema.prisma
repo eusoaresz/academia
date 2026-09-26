@@ -15,6 +15,7 @@ model Cliente {
   senha         String   @db.VarChar(255)
   telefone      String   @db.VarChar(20)
   data_cadastro DateTime @default(now())
+  agendamentos  Agendamento[]
 }
 
 model Aluno {
@@ -60,7 +61,58 @@ model Plano {
   duracao_meses Int     @db.SmallInt
   valor_plano   Float
   ativo         Boolean @default(true)
+  destaque      Boolean @default(false)
+  ia_texto      String?
+  ia_modelo     String?
+  ia_gerado_em  DateTime?
+  horarios      Horario[]
+  agendamentos  Agendamento[]
   @@map("planos")
+}
+
+model Admin {
+  id_admin     String @id @default(uuid()) @db.Uuid
+  nome         String @db.VarChar(80)
+  email        String @unique @db.VarChar(254)
+  senha        String @db.VarChar(255)
+  ativo        Boolean @default(true)
+  respostas    Agendamento[]
+}
+
+model Horario {
+  id_horario   Int @id @default(autoincrement())
+  id_plano     Int
+  data_hora    DateTime
+  ativo        Boolean @default(true)
+  plano        Plano @relation(fields: [id_plano], references: [id_plano], onDelete: Restrict)
+  agendamentos Agendamento[]
+  @@unique([id_plano, data_hora])
+}
+
+model Agendamento {
+  id_agendamento String @id @default(uuid()) @db.Uuid
+  id_cliente     String @db.Uuid
+  id_plano       Int
+  id_horario     Int
+  id_admin       String? @db.Uuid
+  observacao_cliente String @default("") @db.VarChar(500)
+  status         StatusAgendamento @default(Pendente)
+  resposta_admin String? @db.VarChar(1000)
+  criado_em      DateTime @default(now())
+  respondido_em  DateTime?
+  cliente        Cliente @relation(fields: [id_cliente], references: [id_cliente], onDelete: Restrict)
+  plano          Plano @relation(fields: [id_plano], references: [id_plano], onDelete: Restrict)
+  horario        Horario @relation(fields: [id_horario], references: [id_horario], onDelete: Restrict)
+  admin          Admin? @relation(fields: [id_admin], references: [id_admin], onDelete: Restrict)
+  @@index([id_cliente, criado_em])
+  @@index([status])
+}
+
+enum StatusAgendamento {
+  Pendente
+  Confirmado
+  Recusado
+  Cancelado
 }
 
 model Pagamento {

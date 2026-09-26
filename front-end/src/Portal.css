@@ -1,0 +1,30 @@
+.portal-page { min-height:100vh; background:#f7faf8; color:#17221f; }
+.portal-header { padding:24px max(24px,calc((100vw - 1180px)/2)); display:flex; align-items:center; justify-content:space-between; gap:24px; background:white; border-bottom:1px solid #e5ebe7; }
+.portal-header nav { display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+.portal-header .client-brand { margin:0; padding:0; flex-shrink:0; }
+.portal-header nav button,.portal-header nav a { border:0; background:none; color:#24745d; font-size:13px; text-decoration:none; padding:7px 0; }
+.portal-content { max-width:1180px; padding:40px 24px; margin:auto; }
+.portal-hero { padding:20px 0 32px; }.portal-hero h1 { font:600 clamp(34px,5vw,56px) 'Space Grotesk',sans-serif; margin:12px 0; letter-spacing:-1.5px; }.portal-hero p { color:#52625b; }
+.portal-toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:30px; }
+.portal-search { display:flex; align-items:center; gap:10px; flex:1; min-width:220px; }
+.portal-page .portal-search { display:flex; }
+.portal-page input,.portal-page select,.portal-page textarea,.admin-work input,.admin-work select,.admin-work textarea { padding:11px; border:1px solid #cbd7d0; border-radius:7px; background:#fff; font:inherit; width:100%; color:#17221f; }
+.portal-page button,.admin-work button { cursor:pointer; }
+.portal-toolbar button,.portal-panel>button,.portal-content>section>button,.admin-work button { padding:10px 15px; border:1px solid #cbd7d0; border-radius:7px; color:#24745d; background:white; }
+.portal-toolbar .portal-active { background:#24745d; color:white; }
+.portal-panel { padding:26px; background:white; border:1px solid #e5ebe7; border-radius:12px; min-width:0; }
+.portal-panel h1 { font-size:30px; }.portal-panel p { line-height:1.65; overflow-wrap:anywhere; }
+.portal-detail { display:grid; grid-template-columns:1fr 1fr; gap:24px; }.portal-back { display:flex; align-items:center; gap:8px; border:0; background:none; color:#24745d; padding:12px 0; margin-bottom:14px; }
+.portal-tag { display:inline-flex; align-items:center; gap:5px; border-radius:30px; padding:6px 10px; background:#ecf7e9; color:#24745d; font-size:12px; }
+.status-Pendente { background:#fff4de; color:#805119; }.status-Recusado,.status-Cancelado { background:#f8e9e8; color:#8b3532; }
+.portal-page fieldset,.admin-work fieldset { padding:0; border:0; display:grid; gap:18px; min-width:0; }
+.portal-page label,.admin-work label { display:grid; gap:8px; font-size:14px; }.portal-page .portal-checkbox { display:flex; align-items:center; }.portal-checkbox input { width:auto; }
+.portal-auth { max-width:460px; margin:10px auto; }.portal-page .client-primary-button { margin-top:20px; }.portal-page button:disabled,.admin-work button:disabled { opacity:.6; cursor:wait; }
+.portal-ai { padding:14px; margin-top:18px; border-left:3px solid #24745d; background:#f0f6f2; white-space:pre-line; }.portal-ai p { min-height:0; color:#34493e; line-height:1.6; }.portal-ai small { color:#52625b; font-size:11px; }
+.portal-appointments { display:grid; gap:18px; margin-top:24px; }.portal-appointments blockquote { margin:18px 0; padding:12px 18px; background:#f7faf8; border-left:3px solid #24745d; }
+.portal-footer { max-width:1180px; margin:auto; padding:24px; color:#72817b; font-size:12px; }
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+.portal-page :focus-visible,.admin-work :focus-visible { outline:3px solid #24745d; outline-offset:3px; }
+.admin-work { display:grid; gap:20px; }.admin-work .admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }.admin-work .admin-actions { display:flex; flex-wrap:wrap; gap:10px; }.admin-work article { overflow-wrap:anywhere; }
+.chart-row { display:grid; grid-template-columns:120px 1fr 35px; gap:12px; align-items:center; margin:14px 0; font-size:12px; }.chart-row .chart-track { height:20px; border-radius:4px; background:#eef3ef; }.chart-row .chart-bar { height:100%; border-radius:4px; background:#24745d; min-width:0; }
+@media(max-width:760px) { .portal-header { flex-direction:column; align-items:flex-start; padding:20px; }.portal-detail,.admin-work .admin-grid { grid-template-columns:1fr; }.portal-content { padding:24px 18px; }.portal-panel { padding:20px; } }

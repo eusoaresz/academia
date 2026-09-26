@@ -1,30 +1,8 @@
-import express from 'express'
-import cors from 'cors'
-import alunosRouter from './routes/alunos'
-import instrutoresRouter from './routes/instrutores'
-import loginRouter from './routes/login'
-import planosRouter from './routes/planos'
-import treinosRouter from './routes/treinos'
-import pagamentosRouter from './routes/pagamentos'
-import clientesRouter from './routes/clientes'
-
-const app = express()
-const port = 3000
-
-app.use(express.json())
-app.use(cors())
-app.use('/alunos', alunosRouter)
-app.use('/instrutores', instrutoresRouter)
-app.use('/login', loginRouter)
-app.use('/clientes', clientesRouter)
-app.use('/planos', planosRouter)
-app.use('/treinos', treinosRouter)
-app.use('/pagamentos', pagamentosRouter)
-
-app.get('/', (req, res) => {
-  res.send('API: Academia - Servidor rodando!')
-})
-
-app.listen(port, () => {
-  console.log(`Servidor rodando na porta: ${port}`)
-})
+import 'dotenv/config'
+import { app } from './app'
+import { prisma } from '../lib/prisma'
+if (!process.env.DATABASE_URL || !process.env.JWT_KEY) throw new Error('Configure DATABASE_URL e JWT_KEY antes de iniciar.')
+const server = app.listen(Number(process.env.PORT ?? 3000), () => console.log(`API na porta ${process.env.PORT ?? 3000}`))
+function shutdown() { server.close(() => { void prisma.$disconnect().finally(() => process.exit(0)) }) }
+process.on('SIGTERM', shutdown)
+process.on('SIGINT', shutdown)

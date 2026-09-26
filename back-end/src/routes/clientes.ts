@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken"
 import { z } from "zod"
 import { prisma } from "../../lib/prisma"
 import { hashPassword, verifyPassword } from "../../lib/password"
+import { loginLimit } from '../middleware/auth'
 
 const emailSchema = z.string().trim().toLowerCase().email().max(254)
 const cadastroSchema = z.object({
@@ -11,7 +12,7 @@ const cadastroSchema = z.object({
   telefone: z.string().trim().regex(/^[+\d\s().-]{8,20}$/).refine(value => value.replace(/\D/g, "").length >= 8),
   senha: z.string().min(8).max(100),
 })
-const loginSchema = z.object({ email: emailSchema, senha: z.string().min(1).max(100) })
+const loginSchema = z.object({ email: emailSchema, senha: z.string().min(1).max(100), manterConectado: z.boolean().default(false) })
 const publicFields = { id_cliente: true, nome: true, email: true, telefone: true, data_cadastro: true } as const
 const issuer = "academia"
 const audience = "cliente"
@@ -39,7 +40,7 @@ export function createClientesRouter(db: Pick<typeof prisma, "cliente"> = prisma
     }
   })
 
-  router.post("/login", async (req, res) => {
+  router.post("/login", loginLimit(), async (req, res) => {
     const parsed = loginSchema.safeParse(req.body)
     if (!parsed.success) {
       res.status(400).json({ erro: "Informe um e-mail válido e sua senha." })
@@ -56,10 +57,11 @@ export function createClientesRouter(db: Pick<typeof prisma, "cliente"> = prisma
         res.status(401).json({ erro: "E-mail ou senha inválidos." })
         return
       }
+      const expiresIn = parsed.data.manterConectado ? 7 * 24 * 3600 : 3600
       const token = jwt.sign({ papel: "cliente" }, key, {
-        algorithm: "HS256", subject: cliente.id_cliente, issuer, audience, expiresIn: "1h",
+        algorithm: "HS256", subject: cliente.id_cliente, issuer, audience, expiresIn,
       })
-      res.json({ token, expiresIn: 3600 })
+      res.json({ token, expiresIn })
     } catch {
       res.status(500).json({ erro: "Não foi possível entrar. Tente novamente." })
     }
