@@ -44,6 +44,7 @@ export default function InstrutorLogin({ onLogin }: { onLogin: (instrutor: Instr
       const profile = await request<InstrutorSession>('/me', {
         headers: { Authorization: `Bearer ${result.token}` },
       })
+      sessionStorage.setItem('instrutorNome', profile.nome)
       onLogin({ ...profile, token: result.token, expiresAt: Date.now() + result.expiresIn * 1000 })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível entrar.')
