@@ -7,6 +7,16 @@ datasource db {
   provider = "postgresql"
 }
 
+// Conta de acesso do cliente; matrícula e gestão de alunos são fluxos separados.
+model Cliente {
+  id_cliente    String   @id @default(uuid()) @db.Uuid
+  nome          String   @db.VarChar(80)
+  email         String   @unique @db.VarChar(254)
+  senha         String   @db.VarChar(255)
+  telefone      String   @db.VarChar(20)
+  data_cadastro DateTime @default(now())
+}
+
 model Aluno {
   id_aluno        Int      @id @default(autoincrement())
   nome            String   @db.VarChar(30)

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Bell, CalendarDays, ClipboardList, CreditCard, Dumbbell, GraduationCap, LayoutDashboard, Menu, Pencil, Plus, Search, Settings, Trash2, Users, X } from 'lucide-react'
 import './App.css'
+import ClientePortal from './ClientePortal'
 
 type Entity = 'Alunos' | 'Planos' | 'Treinos' | 'Instrutores' | 'Pagamentos'
 type Page = 'Visão geral' | Entity
@@ -68,6 +69,16 @@ function initialValues(entity: Entity, store: Store, value?: Item): Item {
 }
 
 export default function App() {
+  const [hash, setHash] = useState(window.location.hash)
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', onChange)
+    return () => window.removeEventListener('hashchange', onChange)
+  }, [])
+  return hash === '#gestao' ? <><div className="client-management-link"><a href="#cliente">← Área do cliente</a></div><Gestao/></> : <ClientePortal/>
+}
+
+function Gestao() {
   const [page,setPage] = useState<Page>('Visão geral'), [store,setStore] = useState<Store>(emptyStore), [query,setQuery] = useState(''), [menu,setMenu] = useState(false), [editing,setEditing] = useState<{entity:Entity;value?:Item}|null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')

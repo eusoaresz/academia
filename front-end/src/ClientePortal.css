@@ -1,0 +1,24 @@
+.client-page { min-height: 100vh; padding: 24px; color: #17221f; background: #f7faf8; }
+.client-management-link { padding: 12px 24px; background: #fff; border-bottom: 1px solid #e5ebe7; }
+.client-management-link a { color: #24745d; }
+.client-header { max-width: 1050px; margin: 0 auto 40px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.client-header a { color: #24745d; font-size: 14px; }
+.client-header .client-brand { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 700; text-decoration: none; }
+.client-card { width: min(100%, 480px); margin: 0 auto; padding: 32px; background: white; border: 1px solid #e5ebe7; border-radius: 16px; box-shadow: 0 12px 40px #17221f08; }
+.client-card h1 { margin: 8px 0 12px; font-size: 28px; overflow-wrap: anywhere; }
+.client-card p { line-height: 1.6; }
+.client-card fieldset { border: 0; padding: 0; margin: 24px 0 0; display: grid; gap: 18px; min-width: 0; }
+.client-card label { display: grid; gap: 7px; font-size: 14px; font-weight: 600; }
+.client-card input { width: 100%; padding: 12px; border: 1px solid #cbd7d0; border-radius: 7px; background: #fff; color: #17221f; }
+.client-card input:focus-visible, .client-page button:focus-visible, .client-page a:focus-visible { outline: 3px solid #24745d; outline-offset: 3px; }
+.client-card small { color: #52625b; font-weight: 400; }
+.client-card .primary-button { justify-content: center; width: 100%; margin-top: 4px; min-height: 44px; }
+.client-switch { display: block; margin: 24px auto 0; padding: 8px; border: 0; background: none; color: #24745d; text-decoration: underline; }
+.client-card button:disabled { opacity: .65; cursor: wait; }
+.client-error, .client-notice { padding: 12px; border-radius: 8px; font-size: 14px; }
+.client-error { color: #8b2424; background: #fff0ed; }
+.client-notice { color: #1e624f; background: #ecf7e9; }
+.client-card dt { margin-top: 18px; color: #52625b; font-size: 12px; }
+.client-card dd { margin: 5px 0 0; overflow-wrap: anywhere; }
+.client-card dl { margin-bottom: 28px; }
+@media (max-width: 540px) { .client-page { padding: 18px; } .client-card { padding: 24px; } .client-header { align-items: flex-start; } .client-header > a:last-child { max-width: 100px; text-align: right; } }

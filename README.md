@@ -4,6 +4,31 @@ API e interface web para gerenciamento de uma academia. O projeto está organiza
 
 ## Estado atual
 
+### Cadastro e login de clientes (requisito 4)
+
+A página inicial abre a área do cliente (`/#cliente`), com cadastro, login,
+perfil da conta autenticada e saída. A gestão existente continua em `/#gestao`.
+Clientes são contas próprias no modelo `Cliente`: criar uma conta não cria uma
+matrícula nem escolhe um plano. Alunos e instrutores existentes são preservados;
+seus registros não são convertidos automaticamente em contas de clientes.
+
+| Método | Endpoint | Uso |
+| --- | --- | --- |
+| POST | `/clientes/cadastro` | Nome, e-mail, telefone e senha de 8 a 100 caracteres |
+| POST | `/clientes/login` | E-mail e senha; retorna JWT com validade de uma hora |
+| GET | `/clientes/me` | Perfil da própria conta, usando `Authorization: Bearer <token>` |
+
+O e-mail é normalizado e único. Senhas usam hash com salt e não são retornadas.
+A sessão do cliente fica apenas em memória e termina ao sair, recarregar ou
+expirar. A opção “Manter conectado” do requisito 5 ainda não faz parte deste fluxo.
+A proteção das rotas administrativas continua pendente no requisito 8.
+
+Após instalar as dependências do backend, execute `npx prisma generate` e
+`npx prisma migrate deploy` para preparar o cliente Prisma e a nova tabela.
+Configure `DATABASE_URL` e `JWT_KEY` no backend. Execute `npm test` em `back-end`
+para verificar cadastro, login e acesso autenticado com banco simulado, sem
+alterar dados do Neon.
+
 O banco foi modelado para os seguintes recursos:
 
 - alunos;
