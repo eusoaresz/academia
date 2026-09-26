@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: movimente-api
+    runtime: node
+    rootDir: back-end
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.18.0
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: TRUST_PROXY
+        value: "1"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false

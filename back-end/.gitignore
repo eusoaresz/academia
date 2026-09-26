@@ -7,6 +7,7 @@ generated/
 prisma/generated/
 .env
 .env.*
+!.env.example
 .DS_Store
 npm-debug.log*
 yarn-debug.log*
@@ -28,7 +29,6 @@ Dockerfile~
 
 *.class
 
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
