@@ -23,6 +23,19 @@ A sessão do cliente fica apenas em memória e termina ao sair, recarregar ou
 expirar. A opção “Manter conectado” do requisito 5 ainda não faz parte deste fluxo.
 A proteção das rotas administrativas continua pendente no requisito 8.
 
+### Login de instrutores
+
+O painel de gestão (`/#gestao`) exige autenticação de instrutor. O fluxo usa
+JWT com emissor e audiência próprios, sem compartilhar tokens com clientes.
+
+| Método | Endpoint | Uso |
+| --- | --- | --- |
+| POST | `/instrutores/login` | E-mail e senha; retorna perfil e JWT com validade de uma hora |
+| GET | `/instrutores/me` | Perfil do instrutor autenticado, usando `Authorization: Bearer <token>` |
+
+O seed cria o instrutor de desenvolvimento `rafael@movimente.com` com a senha
+`123456`. As sessões do painel ficam apenas em memória no navegador.
+
 Após instalar as dependências do backend, execute `npx prisma generate` e
 `npx prisma migrate deploy` para preparar o cliente Prisma e a nova tabela.
 Configure `DATABASE_URL` e `JWT_KEY` no backend. Execute `npm test` em `back-end`

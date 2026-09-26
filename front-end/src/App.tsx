@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Bell, CalendarDays, ClipboardList, CreditCard, Dumbbell, GraduationCap, LayoutDashboard, Menu, Pencil, Plus, Search, Settings, Trash2, Users, X } from 'lucide-react'
 import './App.css'
 import ClientePortal from './ClientePortal'
+import InstrutorLogin, { type InstrutorSession } from './InstrutorLogin'
 
 type Entity = 'Alunos' | 'Planos' | 'Treinos' | 'Instrutores' | 'Pagamentos'
 type Page = 'Visão geral' | Entity
@@ -80,6 +81,7 @@ export default function App() {
 
 function Gestao() {
   const [page,setPage] = useState<Page>('Visão geral'), [store,setStore] = useState<Store>(emptyStore), [query,setQuery] = useState(''), [menu,setMenu] = useState(false), [editing,setEditing] = useState<{entity:Entity;value?:Item}|null>(null)
+  const [instrutor, setInstrutor] = useState<InstrutorSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -88,10 +90,20 @@ function Gestao() {
   const mutationPending = useRef(false)
 
   useEffect(() => {
+    if (!instrutor) return
+    const timer = window.setTimeout(() => setInstrutor(null), Math.max(0, instrutor.expiresAt - Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [instrutor])
+
+  useEffect(() => {
+    if (!instrutor) {
+      setLoading(false)
+      return
+    }
     const controller = new AbortController()
     const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(15000)])
     Promise.all((Object.keys(paths) as Entity[]).map(async entity => {
-      const items = await request(paths[entity], { signal })
+      const items = await request(paths[entity], { signal, headers: { Authorization: `Bearer ${instrutor.token}` } })
       if (!Array.isArray(items)) throw new Error(`Resposta inválida ao carregar ${entity.toLowerCase()}.`)
       return [entity, items] as const
     })).then(items => {
@@ -102,7 +114,9 @@ function Gestao() {
       if (!controller.signal.aborted) setLoading(false)
     })
     return () => controller.abort()
-  }, [reload])
+  }, [reload, instrutor])
+
+  if (!instrutor) return <InstrutorLogin onLogin={setInstrutor}/>
 
   const navigate = (p: Page) => { setPage(p); setQuery(''); setMenu(false); setActionError('') }
   const save = async (entity: Entity, value: Item) => {
@@ -114,7 +128,7 @@ function Gestao() {
     try {
       const result = await request(`${paths[entity]}${id ? `/${id}` : ''}`, {
         method: id ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${instrutor.token}` },
         body: JSON.stringify(value),
       })
       if (!result || !Number.isInteger(result[keys[entity]])) throw new Error('A API não retornou o registro salvo.')
@@ -136,7 +150,7 @@ function Gestao() {
     setBusy(true)
     setActionError('')
     try {
-      await request(`${paths[entity]}/${id}`, { method: 'DELETE' })
+      await request(`${paths[entity]}/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${instrutor.token}` } })
       setStore(current => ({ ...current, [entity]: current[entity].filter(item => item[keys[entity]] !== id) }))
     } catch (error) {
       setActionError(`Não foi possível excluir ${singular[entity]}: ${errorMessage(error)}`)
