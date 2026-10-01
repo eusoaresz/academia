@@ -27,8 +27,8 @@ Configure variáveis no serviço:
 | JWT_KEY | Segredo aleatório longo; o Blueprint gera um se ainda não existir |
 | FRONTEND_URL | Origem HTTPS exata do frontend, sem barra final |
 | TRUST_PROXY | `1` para o proxy do Render |
-| GEMINI_API_KEY | Chave secreta criada na plataforma da Google Gemini |
-| GEMINI_MODEL | Identificador de modelo de texto disponível na sua conta |
+| OPENAI_API_KEY | Chave secreta criada na plataforma da OpenAI |
+| OPENAI_MODEL | Identificador de modelo de texto disponível na sua conta |
 
 `PORT` é fornecida pelo Render. A autenticação administrativa é obrigatória nas
 rotas de gestão; o catálogo público só mostra planos ativos.
@@ -49,7 +49,7 @@ JWT_KEY ou DATABASE_URL para variáveis `VITE_`.
 
 Entre em `/#gestao` com o administrador criado. Em Planos, marque os destaques.
 Em Horários, publique vagas futuras. Em Informações IA, clique em Consultar IA.
-O servidor consulta a API generateContent da Google Gemini, salva texto, modelo e data, e
+O servidor consulta a API de chat completions da OpenAI, salva texto, modelo e data, e
 identifica sua origem na página do cliente. Não há texto fictício substituindo a IA.
 Sem chave/modelo, a operação informa indisponibilidade. A edição do plano invalida
 o texto anterior; o cache limita novas consultas do mesmo conteúdo a uma por dia.
@@ -67,12 +67,12 @@ em conjunto. Os arquivos de configuração, sozinhos, não comprovam publicaçã
 
 Referências: [Render Blueprint](https://render.com/docs/blueprint-spec),
 [Vite na Vercel](https://vercel.com/docs/frameworks/frontend/vite),
-[Google Gemini API](https://ai.google.dev/api/generate-content).
+[OpenAI API](https://platform.openai.com/docs/api-reference/chat).
 
-## Configurar a Google Gemini localmente
+## Configurar a OpenAI localmente
 
 1. Crie uma chave em https://aistudio.google.com/apikey. Se uma chave foi compartilhada, substitua-a.
-2. Em `back-end/.env`, defina `GEMINI_API_KEY` com a chave e `GEMINI_MODEL` com o identificador de um modelo de texto disponível na sua conta, por exemplo `gemini-flash-latest`.
+2. Em `back-end/.env`, defina `OPENAI_API_KEY` com a chave e `OPENAI_MODEL` com o identificador de um modelo de texto disponível na sua conta, por exemplo `gpt-4o-mini`.
 3. Reinicie o backend. Em produção, execute o build antes de iniciar o servidor.
 4. Acesse Administração > Informações IA > Consultar IA em um plano.
 5. Abra o catálogo do cliente e confira o texto identificado como IA.

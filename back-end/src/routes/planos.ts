@@ -48,7 +48,7 @@ export function createPlanosRouter(db = prisma, generate = generatePlanInfo) {
     if (inflight.has(id)) { res.status(409).json({ erro: 'A consulta já está em andamento.' }); return }
     const plano = await db.plano.findUnique({ where: { id_plano: id } })
     if (!plano) { res.status(404).json({ erro: 'Plano não encontrado.' }); return }
-    if (plano.ia_texto && plano.ia_modelo === process.env.GEMINI_MODEL?.trim() && plano.ia_gerado_em && Date.now() - plano.ia_gerado_em.getTime() < 86400000) { res.json(plano); return }
+    if (plano.ia_texto && plano.ia_modelo === process.env.OPENAI_MODEL?.trim() && plano.ia_gerado_em && Date.now() - plano.ia_gerado_em.getTime() < 86400000) { res.json(plano); return }
     if (inflight.has(id)) { res.status(409).json({ erro: 'A consulta já está em andamento.' }); return }
     inflight.add(id)
     try {

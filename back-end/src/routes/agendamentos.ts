@@ -15,7 +15,6 @@ export function createAgendamentosRouter(db = prisma) {
     const parsed = z.object({ id_horario: z.number().int().positive(), observacao_cliente: z.string().trim().max(500).default('') }).safeParse(req.body)
     if (!parsed.success) { res.status(400).json({ erro: 'Selecione um horário e use até 500 caracteres na observação.' }); return }
     try {
-      // Serialização evita reservar simultaneamente um horário que está sendo desativado.
       const created = await db.$transaction(async tx => {
         const horario = await tx.horario.findFirst({ where: { id_horario: parsed.data.id_horario, ativo: true, data_hora: { gt: new Date() }, plano: { ativo: true } } })
         if (!horario) return null
