@@ -42,10 +42,12 @@ o Vite normalmente usa 5173. Se usar outra porta, adicione sua origem em
 - `/#gestao/login`: login de administrador. Após autenticar, o painel fica em `/#gestao/inicial`.
 - `/#gestao/inicial`: gestão da academia, protegida por sessão de administrador.
 - Planos: cadastro, alteração e campo Destaque. Inativos não aparecem no catálogo.
+- Alunos cadastrados pela gestão recebem uma conta correspondente na área do cliente,
+  usando o e-mail e a senha definidos no cadastro.
 - Horários: o administrador publica uma vaga por data/hora e plano, em Brasília.
 - Agendamentos: confirmar, recusar ou cancelar com resposta registrada no histórico.
 - Dashboard: gráficos reais de agendamentos por status e interesse por plano.
-- Informações IA: consulta real à Google Gemini, com texto, modelo e data salvos no plano.
+- Informações IA: consulta real à OpenAI, com texto, modelo e data salvos no plano.
 
 O cliente não precisa se matricular para criar uma conta. A conta `Cliente` é
 separada dos cadastros legados de Aluno, Instrutor, Treino e Pagamento.
@@ -111,7 +113,7 @@ Ordem recomendada: publicar a API no Render, copiar sua URL, configurar
 `VITE_API_URL` no Vercel, fazer redeploy do frontend e testar `/#cliente`,
 `/#gestao/login` e `/#gestao/inicial`.
 
-O recurso de IA fica disponível após definir `GEMINI_API_KEY` e `GEMINI_MODEL` no
+O recurso de IA fica disponível após definir `OPENAI_API_KEY` e `OPENAI_MODEL` no
 servidor; nenhum texto fictício é apresentado como consulta real.
 
 ## Situação dos requisitos do trabalho

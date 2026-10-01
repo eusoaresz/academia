@@ -16,6 +16,7 @@ model Cliente {
   telefone      String   @db.VarChar(20)
   data_cadastro DateTime @default(now())
   agendamentos  Agendamento[]
+  aluno         Aluno?
 }
 
 model Aluno {
@@ -28,6 +29,9 @@ model Aluno {
   foto            String
   id_plano        Int
   status          DateTime @default(now())
+  senha           String?  @db.VarChar(255)
+  cliente_id      String?  @unique @db.Uuid
+  cliente         Cliente? @relation(fields: [cliente_id], references: [id_cliente], onDelete: SetNull)
   @@map("alunos")
 }
 

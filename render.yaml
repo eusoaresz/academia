@@ -19,7 +19,7 @@ services:
         sync: false
       - key: TRUST_PROXY
         value: "1"
-      - key: GEMINI_API_KEY
+      - key: OPENAI_API_KEY
         sync: false
-      - key: GEMINI_MODEL
+      - key: OPENAI_MODEL
         sync: false
