@@ -28,7 +28,7 @@ export default function ClientePortal() {
   const [notice, setNotice] = useState('')
   const [selected, setSelected] = useState<number | null>(null)
   const [busca, setBusca] = useState('')
-  const [destaques, setDestaques] = useState(true)
+  const [destaques, setDestaques] = useState(false)
   const [planos, setPlanos] = useState<Plano[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -80,9 +80,9 @@ export default function ClientePortal() {
     <div className="portal-content">
       {error && <p role="alert" className="client-error">{error}</p>}{notice && <p role="status" className="client-notice">{notice}</p>}
       {(view === 'login' || view === 'cadastro') && <AuthForm key={view} mode={view} switchMode={() => navigate(view === 'login' ? 'cadastro' : 'login')} onCreated={() => { setView('login'); setNotice('Conta criada. Entre com seu e-mail e senha.') }} onLogin={(profile, next) => { setCliente(profile); setSession(next); setView('planos'); setNotice('Você entrou na sua conta.') }}/ >}
-      {view === 'conta' && cliente && <section className="portal-panel"><p className="client-eyebrow">MINHA CONTA</p><h1>Olá, {cliente.nome}</h1><dl><dt>E-mail</dt><dd>{cliente.email}</dd><dt>Telefone</dt><dd>{cliente.telefone}</dd></dl>{session && <MeuPlano token={session.token} onAuthError={onAuthError}/>}<button className="client-primary-button" onClick={() => navigate('agenda')}>Ver meus agendamentos</button></section>}
+      {view === 'conta' && cliente && <section className="portal-panel"><p className="client-eyebrow">MINHA CONTA</p><h1>Olá, {cliente.nome}</h1><dl><dt>E-mail</dt><dd>{cliente.email}</dd><dt>Telefone</dt><dd>{cliente.telefone}</dd></dl>{session && <MeuPlano token={session.token} onAuthError={onAuthError} choose={() => navigate('planos')}/>}<button className="client-primary-button" onClick={() => navigate('agenda')}>Ver meus agendamentos</button></section>}
       {view === 'agenda' && session && <MinhaAgenda token={session.token} onAuthError={onAuthError}/>}
-      {view === 'planos' && selected !== null && <Detalhes key={selected} id={selected} token={session?.token} back={() => setSelected(null)} login={() => navigate('login')} onBooked={() => { setView('agenda'); setNotice('Solicitação enviada! A academia responderá por aqui.') }} onAuthError={onAuthError}/>}
+      {view === 'planos' && selected !== null && <Detalhes key={selected} id={selected} token={session?.token} nome={cliente?.nome ?? ''} back={() => setSelected(null)} login={() => navigate('login')} onChosen={() => { setView('conta'); setNotice('Plano selecionado! Registre o pagamento abaixo para confirmação da academia.') }} onBooked={() => { setView('agenda'); setNotice('Solicitação enviada! A academia responderá por aqui.') }} onAuthError={onAuthError}/>}
       {view === 'planos' && selected === null && <>
         <section className="portal-hero"><p className="client-eyebrow">SEU PRÓXIMO MOVIMENTO</p><h1>Encontre seu ritmo.</h1><p>Conheça nossos planos e agende uma aula experimental.</p></section>
         <div className="portal-toolbar"><label className="portal-search"><Search size={18}/><span className="sr-only">Pesquisar planos</span><input maxLength={100} placeholder="Busque por nome ou descrição" value={busca} onChange={event => { setBusca(event.target.value); setDestaques(false) }}/></label><button className={destaques ? 'portal-active' : ''} onClick={() => { setBusca(''); setDestaques(true) }}>Exibir destaques</button><button onClick={() => { setBusca(''); setDestaques(false) }}>Todos os planos</button></div>
@@ -132,7 +132,7 @@ function AuthForm({ mode, switchMode, onCreated, onLogin }: { mode: 'login' | 'c
   </fieldset></form><button className="client-switch" disabled={busy} onClick={switchMode}>{mode === 'login' ? 'Ainda não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}</button></section>
 }
 
-function Detalhes({ id, token, back, login, onBooked, onAuthError }: { id: number; token?: string; back: () => void; login: () => void; onBooked: () => void; onAuthError: (e: unknown) => void }) {
+function Detalhes({ id, token, nome, back, login, onBooked, onChosen, onAuthError }: { id: number; token?: string; nome: string; back: () => void; login: () => void; onBooked: () => void; onChosen: () => void; onAuthError: (e: unknown) => void }) {
   const [plano, setPlano] = useState<Plano | null>(null), [horarios, setHorarios] = useState<Horario[]>([])
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [loading, setLoading] = useState(true), [retry, setRetry] = useState(0)
   const pending = useRef(false)
@@ -140,23 +140,55 @@ function Detalhes({ id, token, back, login, onBooked, onAuthError }: { id: numbe
     let active = true
     // oxlint-disable-next-line react/set-state-in-effect -- Sincroniza o carregamento dos detalhes com o plano remoto.
     setLoading(true); setError('')
-    Promise.all([api<Plano>(`/planos/${id}`), api<Horario[]>(`/horarios?plano=${id}`)]).then(([plan, slots]) => { if (active) { setPlano(plan); setHorarios(slots) } }).catch(cause => { if (active) setError(message(cause)) }).finally(() => { if (active) setLoading(false) })
+    Promise.all([api<Plano>(`/planos/${id}`), api<Horario[]>('/horarios')]).then(([plan, slots]) => { if (active) { setPlano(plan); setHorarios(slots) } }).catch(cause => { if (active) setError(message(cause)) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [id, retry])
   async function book(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!token || pending.current) return
     const data = new FormData(event.currentTarget)
     pending.current = true; setBusy(true); setError('')
-    try { await api('/agendamentos', { method: 'POST', body: JSON.stringify({ id_horario: Number(data.get('horario')), observacao_cliente: data.get('observacao') }) }, token); onBooked() }
+    try { await api('/agendamentos', { method: 'POST', body: JSON.stringify({ id_plano: id, id_horario: Number(data.get('horario')), observacao_cliente: data.get('observacao') }) }, token); onBooked() }
     catch (cause) { setError(message(cause)); onAuthError(cause) }
     finally { pending.current = false; setBusy(false) }
   }
-  return <><button className="portal-back" onClick={back}><ArrowLeft size={16}/>Voltar aos planos</button>{error && <p role="alert" className="client-error">{error} <button onClick={() => setRetry(x => x + 1)}>Atualizar horários</button></p>}{loading ? <p>Carregando…</p> : plano && <div className="portal-detail"><section className="portal-panel"><span className="portal-tag">{plano.destaque ? 'Destaque' : 'Plano'}</span><h1>{plano.nome_plano}</h1><p>{plano.descricao}</p><h2>{money(plano.valor_plano)}</h2><p>Duração: {plano.duracao_meses} meses</p>{plano.ia_texto && <section className="portal-ai"><h3>Saiba mais sobre este plano</h3><p>{plano.ia_texto}</p><small>Informações obtidas por consulta à IA ({plano.ia_modelo}) em {plano.ia_gerado_em && when(plano.ia_gerado_em)}.</small></section>}</section><section className="portal-panel"><h2>Aula experimental</h2><p>Escolha um horário e aguarde a confirmação da academia. Horários de Brasília.</p>{!token ? <><p>Entre na sua conta para enviar uma solicitação.</p><button className="client-primary-button" onClick={login}>Entrar para agendar</button></> : !horarios.length ? <p>Nenhum horário disponível para este plano no momento.</p> : <form onSubmit={book}><fieldset disabled={busy}><label>Horário disponível<select name="horario" required defaultValue=""><option value="" disabled>Selecione</option>{horarios.map(x => <option key={x.id_horario} value={x.id_horario}>{when(x.data_hora)}</option>)}</select></label><label>Observação (opcional)<textarea name="observacao" maxLength={500} rows={4}/></label><button className="client-primary-button">{busy ? 'Enviando…' : 'Agendar aula experimental'}</button></fieldset></form>}</section></div>}</>
+  return <><button className="portal-back" onClick={back}><ArrowLeft size={16}/>Voltar aos planos</button>{error && <p role="alert" className="client-error">{error} <button onClick={() => setRetry(x => x + 1)}>Atualizar horários</button></p>}{loading ? <p>Carregando…</p> : plano && <div className="portal-detail"><section className="portal-panel"><span className="portal-tag">{plano.destaque ? 'Destaque' : 'Plano'}</span><h1>{plano.nome_plano}</h1><p>{plano.descricao}</p><h2>{money(plano.valor_plano)}</h2><p>Duração: {plano.duracao_meses} meses</p>{plano.ia_texto && <section className="portal-ai"><h3>Saiba mais sobre este plano</h3><p>{plano.ia_texto}</p><small>Informações obtidas por consulta à IA ({plano.ia_modelo}) em {plano.ia_gerado_em && when(plano.ia_gerado_em)}.</small></section>}{token ? <EscolherPlano id={id} token={token} nome={nome} onChosen={onChosen} onAuthError={onAuthError}/> : <button className="client-primary-button" onClick={login}>Entrar para escolher este plano</button>}</section><section className="portal-panel"><h2>Aula experimental</h2><p>Experimente antes de contratar. Os horários livres atendem a todos os planos. Escolha uma vaga e aguarde a confirmação da academia. Horários de Brasília.</p>{!token ? <><p>Entre na sua conta para enviar uma solicitação.</p><button className="client-primary-button" onClick={login}>Entrar para agendar</button></> : !horarios.length ? <p>A academia ainda não publicou novas vagas livres. Você pode escolher seu plano agora e voltar para agendar quando houver horários.</p> : <form onSubmit={book}><fieldset disabled={busy}><label>Horário disponível<select name="horario" required defaultValue=""><option value="" disabled>Selecione</option>{horarios.map(x => <option key={x.id_horario} value={x.id_horario}>{when(x.data_hora)}</option>)}</select></label><label>Observação (opcional)<textarea name="observacao" maxLength={500} rows={4}/></label><button className="client-primary-button">{busy ? 'Enviando…' : 'Agendar aula experimental'}</button></fieldset></form>}</section></div>}</>
+}
+
+function EscolherPlano({ id, token, nome, onChosen, onAuthError }: { id: number; token: string; nome: string; onChosen: () => void; onAuthError: (e: unknown) => void }) {
+  const [current, setCurrent] = useState<MeuPlanoData | null>(null)
+  const [error, setError] = useState(''), [busy, setBusy] = useState(false), [retry, setRetry] = useState(0)
+  const pending = useRef(false)
+  useEffect(() => {
+    let active = true
+    api<MeuPlanoData>('/meu-plano', {}, token).then(data => { if (active) { setCurrent(data); setError('') } })
+      .catch(cause => { if (active) { setError(message(cause)); onAuthError(cause) } })
+    return () => { active = false }
+  }, [token, retry, onAuthError])
+  async function choose(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (pending.current) return
+    const values = new FormData(event.currentTarget)
+    pending.current = true; setBusy(true); setError('')
+    try {
+      await api('/meu-plano', { method: 'POST', body: JSON.stringify({ id_plano: id,
+        ...(!current?.matriculado ? { nome: values.get('nome'), data_nascimento: Number(values.get('ano')) } : {}) }) }, token)
+      onChosen()
+    } catch (cause) { setError(message(cause)); onAuthError(cause) }
+    finally { pending.current = false; setBusy(false) }
+  }
+  return <section className="portal-enrollment"><h2>Escolher este plano</h2>
+    <p>A aula experimental é opcional. Escolha seu plano e registre o pagamento em Minha conta.</p>
+    {error && <p className="client-error" role="alert">{error} <button onClick={() => setRetry(x => x + 1)}>Tentar novamente</button></p>}
+    {!current ? (!error && <p>Carregando sua matrícula…</p>) : current.matriculado && current.plano.id_plano === id ? <button className="client-primary-button" onClick={onChosen}>Ver meu plano em Minha conta</button> : current.matriculado && (current.pago || current.pendente) ? <p>Você já possui um plano pago ou com pagamento pendente. Fale com a academia para trocar.</p> : <form onSubmit={choose}><fieldset disabled={busy}>
+      {!current.matriculado && <><label>Nome para a matrícula<input name="nome" defaultValue={nome} required minLength={2} maxLength={30} autoComplete="name"/></label><label>Ano de nascimento<input name="ano" type="number" required min={1900} max={new Date().getFullYear()} placeholder="Ex.: 1998"/></label></>}
+      <button className="client-primary-button">{busy ? 'Salvando…' : 'Escolher plano e ir para Minha conta'}</button>
+    </fieldset></form>}
+  </section>
 }
 
 const metodos = { PIX: 'PIX', Cartao: 'Cartão', Dinheiro: 'Dinheiro (na academia)' } as const
 const situacao = { Pendente: 'Aguardando confirmação', Pago: 'Pago', Atrasado: 'Atrasado' } as const
-function MeuPlano({ token, onAuthError }: { token: string; onAuthError: (e: unknown) => void }) {
+function MeuPlano({ token, onAuthError, choose }: { token: string; onAuthError: (e: unknown) => void; choose: () => void }) {
   const [data, setData] = useState<MeuPlanoData | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false), [retry, setRetry] = useState(0)
   useEffect(() => {
     let active = true
@@ -172,11 +204,11 @@ function MeuPlano({ token, onAuthError }: { token: string; onAuthError: (e: unkn
   }
   return <section className="portal-panel" aria-label="Meu plano"><h2>Meu plano</h2>
     {error && <p className="client-error" role="alert">{error}</p>}{notice && <p className="client-notice" role="status">{notice}</p>}
-    {!data ? (!error && <p>Carregando…</p>) : !data.matriculado ? <p>Você ainda não possui um plano cadastrado. Fale com a academia para fazer a sua matrícula.</p> : <>
+    {!data ? (!error && <p>Carregando…</p>) : !data.matriculado ? <><p>Você ainda não escolheu um plano.</p><button className="client-primary-button" onClick={choose}>Escolher meu plano</button></> : <>
       <h3>{data.plano.nome_plano}</h3><p>{data.plano.descricao}</p>
       <dl><dt>Duração</dt><dd>{data.plano.duracao_meses} meses</dd><dt>Valor</dt><dd>{money(data.plano.valor_plano)}</dd><dt>Aluno desde</dt><dd>{when(data.desde)}</dd></dl>
-      {data.pago ? <p className="client-notice">Seu plano está pago. Obrigado!</p> : data.pendente ? <p className="client-notice">Pagamento aguardando confirmação da academia.</p> : <form onSubmit={pay}><fieldset disabled={busy}><label>Forma de pagamento<select name="metodo" defaultValue="PIX">{Object.entries(metodos).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><button className="client-primary-button">{busy ? 'Enviando…' : `Pagar plano · ${money(data.plano.valor_plano)}`}</button></fieldset></form>}
-      {!!data.pagamentos.length && <><h3>Meus pagamentos</h3>{data.pagamentos.map(item => <p key={item.id_pagamento}>{when(item.data_pagamento)} · {money(item.valor)} · {metodos[item.metodo]} · <strong>{situacao[item.status_pagamento]}</strong></p>)}</>}
+      {data.pago ? <p className="client-notice">Seu plano está pago. Obrigado!</p> : data.pendente ? <p className="client-notice">Pagamento aguardando confirmação da academia.</p> : <form onSubmit={pay}><p>Informe a forma de pagamento combinada com a academia. Este registro não realiza cobrança online; a academia confirmará o recebimento.</p><fieldset disabled={busy}><label>Forma de pagamento<select name="metodo" defaultValue="PIX">{Object.entries(metodos).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><button className="client-primary-button">{busy ? 'Enviando…' : `Registrar pagamento · ${money(data.plano.valor_plano)}`}</button></fieldset></form>}
+      {!data.pago && !data.pendente && <button onClick={choose}>Escolher outro plano</button>}{!!data.pagamentos.length && <><h3>Meus pagamentos</h3>{data.pagamentos.map(item => <p key={item.id_pagamento}>{when(item.data_pagamento)} · {money(item.valor)} · {metodos[item.metodo]} · <strong>{situacao[item.status_pagamento]}</strong></p>)}</>}
     </>}
   </section>
 }

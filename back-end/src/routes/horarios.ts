@@ -6,9 +6,10 @@ import { authenticate } from '../middleware/auth'
 export function createHorariosRouter(db = prisma) {
   const router = Router()
   router.get('/', async (req, res) => {
-    const id = z.coerce.number().int().positive().safeParse(req.query.plano)
+    const id = z.coerce.number().int().positive().optional().safeParse(req.query.plano)
     if (!id.success) { res.status(400).json({ erro: 'Plano inválido.' }); return }
-    res.json(await db.horario.findMany({ where: { id_plano: id.data, ativo: true, plano: { ativo: true }, data_hora: { gt: new Date() }, agendamentos: { none: { status: { in: ['Pendente', 'Confirmado'] } } } }, orderBy: { data_hora: 'asc' } }))
+    // Sem filtro, a aula experimental pode usar qualquer vaga publicada pela academia.
+    res.json(await db.horario.findMany({ where: { ...(id.data ? { id_plano: id.data } : {}), ativo: true, plano: { ativo: true }, data_hora: { gt: new Date() }, agendamentos: { none: { status: { in: ['Pendente', 'Confirmado'] } } } }, orderBy: { data_hora: 'asc' } }))
   })
   router.get('/gestao', authenticate('admin', db), async (_req, res) => {
     res.json(await db.horario.findMany({ include: { plano: { select: { nome_plano: true } }, _count: { select: { agendamentos: { where: { status: { in: ['Pendente', 'Confirmado'] } } } } } }, orderBy: { data_hora: 'desc' } }))

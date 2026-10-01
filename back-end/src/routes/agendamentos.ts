@@ -12,13 +12,16 @@ export function createAgendamentosRouter(db = prisma) {
     res.json(await db.agendamento.findMany({ where: { id_cliente: res.locals.auth.id }, include, orderBy: { criado_em: 'desc' } }))
   })
   router.post('/', authenticate('cliente', db), async (req, res) => {
-    const parsed = z.object({ id_horario: z.number().int().positive(), observacao_cliente: z.string().trim().max(500).default('') }).safeParse(req.body)
+    const parsed = z.object({ id_horario: z.number().int().positive(), id_plano: z.number().int().positive().optional(), observacao_cliente: z.string().trim().max(500).default('') }).safeParse(req.body)
     if (!parsed.success) { res.status(400).json({ erro: 'Selecione um horário e use até 500 caracteres na observação.' }); return }
     try {
       const created = await db.$transaction(async tx => {
-        const horario = await tx.horario.findFirst({ where: { id_horario: parsed.data.id_horario, ativo: true, data_hora: { gt: new Date() }, plano: { ativo: true } } })
+        const horario = await tx.horario.findFirst({ where: { id_horario: parsed.data.id_horario, ativo: true, data_hora: { gt: new Date() }, plano: { ativo: true }, agendamentos: { none: { status: { in: [...live] } } } } })
         if (!horario) return null
-        return tx.agendamento.create({ data: { ...parsed.data, id_cliente: res.locals.auth.id, id_plano: horario.id_plano }, include })
+        const idPlano = parsed.data.id_plano ?? horario.id_plano
+        const plano = await tx.plano.findFirst({ where: { id_plano: idPlano, ativo: true } })
+        if (!plano) return null
+        return tx.agendamento.create({ data: { ...parsed.data, id_cliente: res.locals.auth.id, id_plano: idPlano }, include })
       }, { isolationLevel: 'Serializable' })
       if (!created) { res.status(409).json({ erro: 'Este horário não está mais disponível.' }); return }
       res.status(201).json(created)
