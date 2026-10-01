@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Dumbbell, CalendarDays, Search, ArrowLeft, Star } from 'lucide-react'
 import { api, ApiError, message, money, when } from './api'
-import type { Cliente, Plano, Horario, Agendamento } from './api'
+import type { Cliente, Plano, Horario, Agendamento, MeuPlano as MeuPlanoData } from './api'
 import './ClientePortal.css'
 import './Portal.css'
 
@@ -80,7 +80,7 @@ export default function ClientePortal() {
     <div className="portal-content">
       {error && <p role="alert" className="client-error">{error}</p>}{notice && <p role="status" className="client-notice">{notice}</p>}
       {(view === 'login' || view === 'cadastro') && <AuthForm key={view} mode={view} switchMode={() => navigate(view === 'login' ? 'cadastro' : 'login')} onCreated={() => { setView('login'); setNotice('Conta criada. Entre com seu e-mail e senha.') }} onLogin={(profile, next) => { setCliente(profile); setSession(next); setView('planos'); setNotice('Você entrou na sua conta.') }}/ >}
-      {view === 'conta' && cliente && <section className="portal-panel"><p className="client-eyebrow">MINHA CONTA</p><h1>Olá, {cliente.nome}</h1><dl><dt>E-mail</dt><dd>{cliente.email}</dd><dt>Telefone</dt><dd>{cliente.telefone}</dd></dl><button className="client-primary-button" onClick={() => navigate('agenda')}>Ver meus agendamentos</button></section>}
+      {view === 'conta' && cliente && <section className="portal-panel"><p className="client-eyebrow">MINHA CONTA</p><h1>Olá, {cliente.nome}</h1><dl><dt>E-mail</dt><dd>{cliente.email}</dd><dt>Telefone</dt><dd>{cliente.telefone}</dd></dl>{session && <MeuPlano token={session.token} onAuthError={onAuthError}/>}<button className="client-primary-button" onClick={() => navigate('agenda')}>Ver meus agendamentos</button></section>}
       {view === 'agenda' && session && <MinhaAgenda token={session.token} onAuthError={onAuthError}/>}
       {view === 'planos' && selected !== null && <Detalhes key={selected} id={selected} token={session?.token} back={() => setSelected(null)} login={() => navigate('login')} onBooked={() => { setView('agenda'); setNotice('Solicitação enviada! A academia responderá por aqui.') }} onAuthError={onAuthError}/>}
       {view === 'planos' && selected === null && <>
@@ -152,6 +152,33 @@ function Detalhes({ id, token, back, login, onBooked, onAuthError }: { id: numbe
     finally { pending.current = false; setBusy(false) }
   }
   return <><button className="portal-back" onClick={back}><ArrowLeft size={16}/>Voltar aos planos</button>{error && <p role="alert" className="client-error">{error} <button onClick={() => setRetry(x => x + 1)}>Atualizar horários</button></p>}{loading ? <p>Carregando…</p> : plano && <div className="portal-detail"><section className="portal-panel"><span className="portal-tag">{plano.destaque ? 'Destaque' : 'Plano'}</span><h1>{plano.nome_plano}</h1><p>{plano.descricao}</p><h2>{money(plano.valor_plano)}</h2><p>Duração: {plano.duracao_meses} meses</p>{plano.ia_texto && <section className="portal-ai"><h3>Saiba mais sobre este plano</h3><p>{plano.ia_texto}</p><small>Informações obtidas por consulta à IA ({plano.ia_modelo}) em {plano.ia_gerado_em && when(plano.ia_gerado_em)}.</small></section>}</section><section className="portal-panel"><h2>Aula experimental</h2><p>Escolha um horário e aguarde a confirmação da academia. Horários de Brasília.</p>{!token ? <><p>Entre na sua conta para enviar uma solicitação.</p><button className="client-primary-button" onClick={login}>Entrar para agendar</button></> : !horarios.length ? <p>Nenhum horário disponível para este plano no momento.</p> : <form onSubmit={book}><fieldset disabled={busy}><label>Horário disponível<select name="horario" required defaultValue=""><option value="" disabled>Selecione</option>{horarios.map(x => <option key={x.id_horario} value={x.id_horario}>{when(x.data_hora)}</option>)}</select></label><label>Observação (opcional)<textarea name="observacao" maxLength={500} rows={4}/></label><button className="client-primary-button">{busy ? 'Enviando…' : 'Agendar aula experimental'}</button></fieldset></form>}</section></div>}</>
+}
+
+const metodos = { PIX: 'PIX', Cartao: 'Cartão', Dinheiro: 'Dinheiro (na academia)' } as const
+const situacao = { Pendente: 'Aguardando confirmação', Pago: 'Pago', Atrasado: 'Atrasado' } as const
+function MeuPlano({ token, onAuthError }: { token: string; onAuthError: (e: unknown) => void }) {
+  const [data, setData] = useState<MeuPlanoData | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false), [retry, setRetry] = useState(0)
+  useEffect(() => {
+    let active = true
+    api<MeuPlanoData>('/meu-plano', {}, token).then(result => { if (active) { setData(result); setError('') } }).catch(cause => { if (active) { setError(message(cause)); onAuthError(cause) } })
+    return () => { active = false }
+  }, [token, retry, onAuthError])
+  async function pay(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy) return
+    const metodo = new FormData(event.currentTarget).get('metodo')
+    setBusy(true); setError(''); setNotice('')
+    try { await api('/meu-plano/pagamentos', { method: 'POST', body: JSON.stringify({ metodo }) }, token); setNotice('Pagamento registrado. Aguarde a confirmação da academia.'); setRetry(x => x + 1) } catch (cause) { setError(message(cause)); onAuthError(cause) } finally { setBusy(false) }
+  }
+  return <section className="portal-panel" aria-label="Meu plano"><h2>Meu plano</h2>
+    {error && <p className="client-error" role="alert">{error}</p>}{notice && <p className="client-notice" role="status">{notice}</p>}
+    {!data ? (!error && <p>Carregando…</p>) : !data.matriculado ? <p>Você ainda não possui um plano cadastrado. Fale com a academia para fazer a sua matrícula.</p> : <>
+      <h3>{data.plano.nome_plano}</h3><p>{data.plano.descricao}</p>
+      <dl><dt>Duração</dt><dd>{data.plano.duracao_meses} meses</dd><dt>Valor</dt><dd>{money(data.plano.valor_plano)}</dd><dt>Aluno desde</dt><dd>{when(data.desde)}</dd></dl>
+      {data.pago ? <p className="client-notice">Seu plano está pago. Obrigado!</p> : data.pendente ? <p className="client-notice">Pagamento aguardando confirmação da academia.</p> : <form onSubmit={pay}><fieldset disabled={busy}><label>Forma de pagamento<select name="metodo" defaultValue="PIX">{Object.entries(metodos).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><button className="client-primary-button">{busy ? 'Enviando…' : `Pagar plano · ${money(data.plano.valor_plano)}`}</button></fieldset></form>}
+      {!!data.pagamentos.length && <><h3>Meus pagamentos</h3>{data.pagamentos.map(item => <p key={item.id_pagamento}>{when(item.data_pagamento)} · {money(item.valor)} · {metodos[item.metodo]} · <strong>{situacao[item.status_pagamento]}</strong></p>)}</>}
+    </>}
+  </section>
 }
 
 function MinhaAgenda({ token, onAuthError }: { token: string; onAuthError: (e: unknown) => void }) {

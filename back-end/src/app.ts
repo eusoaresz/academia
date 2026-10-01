@@ -11,6 +11,7 @@ import clientes from './routes/clientes'
 import admin from './routes/admin'
 import horarios from './routes/horarios'
 import agendamentos from './routes/agendamentos'
+import meuPlano from './routes/meu-plano'
 import { authenticate } from './middleware/auth'
 
 export const app = express()
@@ -22,6 +23,7 @@ app.use(express.json({ limit: '32kb' }))
 app.get('/health', (_req, res) => { res.json({ ok: true }) })
 app.get('/', (_req, res) => { res.json({ nome: 'Movimente API' }) })
 app.use('/clientes', clientes)
+app.use('/meu-plano', meuPlano)
 app.use('/admin', admin)
 app.use('/planos', planos)
 app.use('/horarios', horarios)

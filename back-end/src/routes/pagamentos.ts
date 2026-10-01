@@ -51,6 +51,24 @@ router.put("/:id", async (req, res) => {
   }
 })
 
+router.patch("/:id/confirmar", async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ erro: "ID do pagamento inválido" })
+    return
+  }
+  try {
+    const { count } = await prisma.pagamento.updateMany({ where: { id_pagamento: id, status_pagamento: { not: "Pago" } }, data: { status_pagamento: "Pago", data_pagamento: new Date() } })
+    if (!count) {
+      res.status(409).json({ erro: "Pagamento não encontrado ou já confirmado." })
+      return
+    }
+    res.status(200).json(await prisma.pagamento.findUnique({ where: { id_pagamento: id } }))
+  } catch (error) {
+    res.status(400).json({ erro: error })
+  }
+})
+
 router.delete("/:id", async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isInteger(id) || id <= 0) {

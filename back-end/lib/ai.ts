@@ -14,9 +14,10 @@ export async function generatePlanInfo(plan: Plan) {
   const model = process.env.OPENAI_MODEL?.trim()
   if (!key || !model) throw failure('Configure OPENAI_API_KEY e OPENAI_MODEL no backend para consultar a OpenAI.', 503)
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) throw failure('OPENAI_MODEL deve conter apenas o identificador do modelo.', 503)
+  const baseUrl = (process.env.OPENAI_BASE_URL?.trim() || 'https://api.openai.com/v1').replace(/\/+$/, '')
   let response: Response
   try {
-    response = await fetch('https://api.openai.com/v1/chat/completions', {
+    response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(45000),
