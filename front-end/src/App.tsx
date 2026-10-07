@@ -229,12 +229,11 @@ function Form({ entity, value, store, close, save, busy, error }: {
   const submit = (event: FormEvent) => {
     event.preventDefault()
     if (busy || missingReference) return
-    // Envia somente campos do formulário; datas automáticas ficam sob responsabilidade da API.
     const payload = Object.fromEntries(fields[entity].map(field => [field.key, data[field.key]]))
     if (value) payload[keys[entity]] = value[keys[entity]]
     if (entity === 'Instrutores') {
       if (value && !payload.senha) delete payload.senha
-      delete payload.ativo // A API atual ainda não permite alterar o status do instrutor.
+      delete payload.ativo
     }
     if (entity === 'Alunos' && value && !payload.senha) delete payload.senha
     void save(entity, payload)
